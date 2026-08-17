@@ -264,3 +264,109 @@ export function reissueEmail(args: { downloadUrl: string }) {
     text: `Here's a fresh download link (valid 30 days):\n${args.downloadUrl}\n\n${site.owner}`,
   }
 }
+
+/* -------------------------------------------------------------------------- */
+/*  Auth — these replace Supabase's own unbranded emails                      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The verification code screen's email.
+ *
+ * The code is the whole message, so it gets the visual weight: large, spaced,
+ * monospace, selectable as text. No button competes with it, because a parent
+ * reading this on a phone needs to memorise six-to-eight digits for four
+ * seconds and nothing else.
+ */
+export function verifyCodeEmail(args: { code: string; minutes?: number }) {
+  const mins = args.minutes ?? 60
+  return {
+    subject: `${args.code} is your ${site.shortName} code`,
+    html: shell(
+      `
+      <p style="margin:0 0 6px;font-size:17px;font-weight:800;color:${BRAND.ink}">Confirm your email</p>
+      <p style="margin:0 0 20px">Enter this code on the page you just came from and your account is ready.</p>
+      <div style="margin:0 0 20px;padding:18px 20px;background:${BRAND.canvas};border:1px solid ${BRAND.line};border-radius:14px;text-align:center">
+        <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:32px;font-weight:800;letter-spacing:0.16em;color:${BRAND.teal}">${escapeHtml(args.code)}</div>
+      </div>
+      <p style="margin:0 0 8px;font-size:13px;color:${BRAND.muted}">The code expires in ${mins} minutes and can only be used once. You&rsquo;ll only need to do this the first time — after that it&rsquo;s just your email and password.</p>
+      <p style="margin:0;font-size:13px;color:${BRAND.muted}">Didn&rsquo;t try to sign in? You can ignore this email; nothing has changed.</p>
+      <p style="margin:22px 0 0"><strong>${site.owner}</strong></p>
+    `,
+      `Your code is ${args.code}`
+    ),
+    text: `Confirm your email\n\nYour ${site.shortName} code is: ${args.code}\n\nIt expires in ${mins} minutes and can only be used once. You'll only need this the first time.\n\nDidn't try to sign in? Ignore this email.\n\n${site.owner}`,
+  }
+}
+
+/** Branded replacement for Supabase's "Your sign-in link". */
+export function signInLinkEmail(args: { url: string; firstTime?: boolean }) {
+  return {
+    subject: args.firstTime
+      ? `Confirm your ${site.shortName} account`
+      : `Your ${site.shortName} sign-in link`,
+    html: shell(
+      `
+      <p style="margin:0 0 6px;font-size:17px;font-weight:800;color:${BRAND.ink}">${
+        args.firstTime ? 'Confirm your email' : 'Sign in'
+      }</p>
+      <p style="margin:0 0 20px">${
+        args.firstTime
+          ? 'Tap the button below to confirm your address and finish setting up your account.'
+          : 'Tap the button below and you&rsquo;ll be signed straight in.'
+      }</p>
+      <p style="margin:0 0 22px">${button(args.url, args.firstTime ? 'Confirm my email' : 'Sign me in')}</p>
+      <p style="margin:0 0 8px;font-size:13px;color:${BRAND.muted}">This link expires in an hour and works once.${
+        args.firstTime
+          ? ' After this you&rsquo;ll sign in with just your email and password.'
+          : ''
+      }</p>
+      <p style="margin:0;font-size:13px;color:${BRAND.muted}">Didn&rsquo;t request this? You can ignore this email; nothing has changed.</p>
+      <p style="margin:22px 0 0"><strong>${site.owner}</strong></p>
+    `,
+      args.firstTime ? 'Confirm your email address.' : 'Your sign-in link is ready.'
+    ),
+    text: `${args.firstTime ? 'Confirm your email' : 'Sign in'}\n\n${args.url}\n\nThis link expires in an hour and works once.\n\nDidn't request this? Ignore this email.\n\n${site.owner}`,
+  }
+}
+
+/**
+ * Sent when someone tries to register with an address that already has an
+ * account. Registration itself must not reveal that the account exists, so the
+ * on-screen message is identical either way and the difference is only ever
+ * visible to whoever controls the inbox.
+ */
+export function accountExistsEmail(args: { url: string }) {
+  return {
+    subject: `You already have a ${site.shortName} account`,
+    html: shell(
+      `
+      <p style="margin:0 0 14px">Hello,</p>
+      <p style="margin:0 0 18px">Someone just tried to create an account with this email address — but you already have one, so we haven&rsquo;t made a second.</p>
+      <p style="margin:0 0 22px">${button(args.url, 'Sign me in')}</p>
+      <p style="margin:0 0 8px;font-size:13px;color:${BRAND.muted}">If you&rsquo;ve forgotten your password, use &ldquo;Forgotten your password?&rdquo; on the sign-in page.</p>
+      <p style="margin:0;font-size:13px;color:${BRAND.muted}">If this wasn&rsquo;t you, nothing has changed and your password is untouched. You can safely ignore this.</p>
+      <p style="margin:22px 0 0"><strong>${site.owner}</strong></p>
+    `,
+      'You already have an account — here is a sign-in link.'
+    ),
+    text: `You already have a ${site.shortName} account, so we haven't created a second one.\n\nSign in: ${args.url}\n\nIf this wasn't you, nothing has changed.\n\n${site.owner}`,
+  }
+}
+
+/** Branded replacement for Supabase's password-reset email. */
+export function passwordResetEmail(args: { url: string }) {
+  return {
+    subject: `Reset your ${site.shortName} password`,
+    html: shell(
+      `
+      <p style="margin:0 0 6px;font-size:17px;font-weight:800;color:${BRAND.ink}">Choose a new password</p>
+      <p style="margin:0 0 20px">Tap below to set a new password. The link works once and expires in an hour.</p>
+      <p style="margin:0 0 22px">${button(args.url, 'Set a new password')}</p>
+      <p style="margin:0;font-size:13px;color:${BRAND.muted}">Didn&rsquo;t ask for this? Ignore this email — your password stays as it is.</p>
+      <p style="margin:22px 0 0"><strong>${site.owner}</strong></p>
+    `,
+      'Reset your password.'
+    ),
+    text: `Choose a new password\n\n${args.url}\n\nThe link works once and expires in an hour. Didn't ask for this? Ignore this email.\n\n${site.owner}`,
+  }
+}

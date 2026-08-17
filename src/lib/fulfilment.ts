@@ -8,6 +8,7 @@ import {
   orderReceiptEmail,
   ownerSaleEmail,
 } from '@/lib/email/templates'
+import { getSettings } from '@/lib/settings'
 import { siteUrl } from '@/lib/utils'
 import { site } from '@/lib/site'
 
@@ -17,6 +18,8 @@ import { site } from '@/lib/site'
  */
 async function notifyOwner(db: Admin, order: OrderRow) {
   try {
+    if (!(await getSettings()).notifyOwnerSale) return
+
     const { data: items } = await db
       .from('order_items')
       .select('product_name, unit_price_pence')

@@ -7,6 +7,7 @@ import { createAdminClient, hasAdminCredentials } from '@/lib/supabase/admin'
 import { hasRole } from '@/lib/supabase/rpc'
 import { sendEmail, redact } from '@/lib/email/send'
 import { homeworkPostedEmail, feedbackPostedEmail } from '@/lib/email/templates'
+import { getSettings } from '@/lib/settings'
 import { siteUrl } from '@/lib/utils'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/supabase/types'
@@ -125,11 +126,15 @@ export async function createHomework(formData: FormData): Promise<ActionResult> 
     // Notify parents. Email failure must never undo a successful post, so this
     // is fully isolated and only affects the message shown back to Ms Betty.
     let notified = 0
+    let notifyOff = false
     try {
-      const people = await recipientsFor(db, {
-        childId: d.childId || null,
-        groupId: d.groupId || null,
-      })
+      notifyOff = !(await getSettings()).notifyHomework
+      const people = notifyOff
+        ? []
+        : await recipientsFor(db, {
+            childId: d.childId || null,
+            groupId: d.groupId || null,
+          })
       const results = await Promise.allSettled(
         people.map((p) => {
           const mail = homeworkPostedEmail({
@@ -166,7 +171,9 @@ export async function createHomework(formData: FormData): Promise<ActionResult> 
       message:
         notified > 0
           ? `Homework posted — ${notified} parent${notified === 1 ? '' : 's'} emailed.`
-          : 'Homework posted. (No linked parents to email yet.)',
+          : notifyOff
+            ? 'Homework posted. (Parent emails are switched off in Settings.)'
+            : 'Homework posted. (No linked parents to email yet.)',
     }
   } catch (err) {
     console.error('[admin/createHomework]', err)
@@ -229,8 +236,10 @@ export async function createFeedback(formData: FormData): Promise<ActionResult> 
     if (error) throw error
 
     let notified = 0
+    let notifyOff = false
     try {
-      const people = await recipientsFor(db, { childId: d.childId })
+      notifyOff = !(await getSettings()).notifyFeedback
+      const people = notifyOff ? [] : await recipientsFor(db, { childId: d.childId })
       const results = await Promise.allSettled(
         people.map((p) => {
           const mail = feedbackPostedEmail({
@@ -262,7 +271,9 @@ export async function createFeedback(formData: FormData): Promise<ActionResult> 
       message:
         notified > 0
           ? 'Feedback saved and emailed to the parent.'
-          : 'Feedback saved. (No linked parent to email yet.)',
+          : notifyOff
+            ? 'Feedback saved. (Parent emails are switched off in Settings.)'
+            : 'Feedback saved. (No linked parent to email yet.)',
     }
   } catch (err) {
     console.error('[admin/createFeedback]', err)

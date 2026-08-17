@@ -36,4 +36,8 @@ export const adminNav: AdminNavGroup[] = [
       { href: '/admin/enquiries', label: 'Enquiries', icon: 'Inbox' },
     ],
   },
+  {
+    group: 'Setup',
+    items: [{ href: '/admin/settings', label: 'Settings', icon: 'Settings' }],
+  },
 ]

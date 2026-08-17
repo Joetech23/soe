@@ -206,6 +206,22 @@ type T<Row, Ins = Partial<Row>, Upd = Partial<Row>> = {
 export interface Database {
   public: {
     Tables: {
+      // ---- admin-editable settings + auth audit (migration 0007) ----
+      app_settings: T<{
+        key: string
+        value: Json
+        updated_at: string
+        updated_by: string | null
+      }>
+      auth_events: T<{
+        id: string
+        email: string | null
+        kind: string
+        detail: string | null
+        ip: string | null
+        created_at: string
+      }>
+
       // ---- tutoring (existing, live) ----
       user_roles: T<{
         id: string
