@@ -95,24 +95,17 @@ export function AuthSplit({
           </ul>
 
           <div className="mt-12 flex items-center gap-4">
-            <div className="flex -space-x-3">
-              {['group-tuition-2', 'confident-reader', 'group-tuition-3'].map((img) => (
-                <span
-                  key={img}
-                  className="relative h-11 w-11 overflow-hidden rounded-full ring-[3px] ring-teal"
-                >
-                  <Image
-                    src={`/images/${img}.jpg`}
-                    alt=""
-                    fill
-                    sizes="44px"
-                    className="object-cover"
-                  />
-                </span>
-              ))}
-            </div>
+            <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full ring-[3px] ring-white/25">
+              <Image
+                src="/images/betty-portrait.jpg"
+                alt=""
+                fill
+                sizes="56px"
+                className="object-cover"
+              />
+            </span>
             <p className="text-sm text-white/80">
-              Trusted by families across every primary year
+              Taught by {site.owner} · Reception to Year 6
             </p>
           </div>
         </div>

@@ -53,9 +53,10 @@ export default async function AccountLayout({
         </div>
       </header>
 
-      <div className="mx-auto max-w-5xl px-5 py-8 md:px-8">
+      {/* pb-24 on mobile clears the fixed bottom tab bar. */}
+      <div className="mx-auto max-w-5xl px-5 pb-24 pt-6 sm:pb-10 sm:pt-8 md:px-8">
         <AccountNav />
-        <div className="mt-8">{children}</div>
+        <div className="mt-6 sm:mt-8">{children}</div>
       </div>
     </div>
   )

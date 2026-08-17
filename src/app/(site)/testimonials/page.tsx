@@ -1,19 +1,19 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Star, Quote, ArrowRight } from 'lucide-react'
-import { site, TESTIMONIALS } from '@/lib/site'
+import { site, TESTIMONIALS, type Testimonial } from '@/lib/site'
 import { siteUrl } from '@/lib/utils'
 import { PageHeader } from '@/components/page-header'
-import { Reveal } from '@/components/reveal'
+import { Reveal } from '@/components/motion'
 
 export const metadata: Metadata = {
   title: 'Kind Words',
   description:
-    'What parents and children say about learning with Ms Betty at Spirit of Excellence Tuition.',
+    'What parents say about learning with Ms Betty at Spirit of Excellence Tuition — phonics, maths, 11+ prep and holiday programmes.',
   alternates: { canonical: siteUrl('/testimonials') },
   openGraph: {
     title: 'Kind Words, Spirit of Excellence Tuition',
-    description: 'Testimonials from families learning with Ms Betty.',
+    description: 'Real reviews from families learning with Ms Betty.',
   },
 }
 
@@ -33,14 +33,15 @@ const jsonLd = {
   review: TESTIMONIALS.map((t) => ({
     '@type': 'Review',
     reviewRating: { '@type': 'Rating', ratingValue: '5', bestRating: '5' },
-    author: { '@type': 'Person', name: t.author.split(',')[0] },
+    author: { '@type': 'Person', name: t.author },
     reviewBody: t.quote,
+    name: t.topic,
   })),
 }
 
-function Stars() {
+function Stars({ className }: { className?: string }) {
   return (
-    <div className="flex gap-0.5" aria-label="5 out of 5 stars">
+    <div className={`flex gap-0.5 ${className ?? ''}`} aria-label="5 out of 5 stars">
       {Array.from({ length: 5 }).map((_, i) => (
         <Star key={i} className="h-4 w-4 text-gold" fill="currentColor" aria-hidden />
       ))}
@@ -48,43 +49,64 @@ function Stars() {
   )
 }
 
+function Card({ t }: { t: Testimonial }) {
+  return (
+    <figure className="card flex h-full flex-col p-6">
+      <div className="flex items-start justify-between gap-3">
+        <span className="badge">{t.topic}</span>
+        <Quote className="h-6 w-6 shrink-0 text-teal/25" aria-hidden />
+      </div>
+      <blockquote className="mt-4 flex-1 leading-relaxed text-ink">
+        <p>{t.quote}</p>
+      </blockquote>
+      <figcaption className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-4">
+        <span className="text-sm font-bold text-teal-deep">{t.author}</span>
+        <Stars />
+      </figcaption>
+    </figure>
+  )
+}
+
 export default function TestimonialsPage() {
   return (
-    <div className="mx-auto max-w-shell px-4 section md:px-8">
+    <div className="shell section">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <PageHeader
         eyebrow="Kind words"
-        title="Real stories, real smiles."
-        lede="The best thing about tuition isn't the test scores, it's the change in how children feel about themselves. Here's what a few families have shared."
+        title="What families say."
+        lede="Every review below is from a parent whose child learns with Ms Betty — phonics, maths boosters, 11+ prep and holiday programmes."
       />
 
-      <div className="mt-12 columns-1 gap-5 sm:columns-2 lg:columns-3 [&>*]:mb-5">
-        {TESTIMONIALS.map((t, i) => (
-          <Reveal key={t.author} delay={(i % 3) * 80}>
-            <figure className="card card-hover break-inside-avoid p-6">
-              <div className="flex items-center justify-between">
-                <span className="tile h-9 w-9 bg-teal-tint text-teal">
-                  <Quote className="h-4 w-4" aria-hidden />
-                </span>
-                <Stars />
-              </div>
-              <blockquote className="mt-4 text-ink">
-                <p>{t.quote}</p>
-              </blockquote>
-              <figcaption className="mt-4 text-sm font-semibold text-teal-deep">
-                {/* em-dash — the original rendered a stray leading comma here */}
-                &mdash; {t.author}
-              </figcaption>
-            </figure>
+      <Reveal className="mt-8 flex flex-wrap items-center gap-4">
+        <Stars />
+        <p className="text-sm font-semibold text-ink">
+          5.0 from {TESTIMONIALS.length} parent reviews
+        </p>
+      </Reveal>
+
+      {/* Longer reviews get their own row so they stay readable; the shorter
+          ones sit three-up underneath. */}
+      <div className="mt-12 grid gap-5 lg:grid-cols-3">
+        {TESTIMONIALS.filter((t) => t.feature).map((t, i) => (
+          <Reveal key={t.topic} delay={i * 90}>
+            <Card t={t} />
           </Reveal>
         ))}
       </div>
 
-      <Reveal className="mt-14 text-center">
-        <h2 className="font-display text-3xl font-semibold text-ink">
+      <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        {TESTIMONIALS.filter((t) => !t.feature).map((t, i) => (
+          <Reveal key={t.topic} delay={i * 80}>
+            <Card t={t} />
+          </Reveal>
+        ))}
+      </div>
+
+      <Reveal className="mt-16 text-center">
+        <h2 className="font-display text-3xl font-bold text-ink">
           Your child could be next.
         </h2>
         <p className="mx-auto mt-3 max-w-md text-ink-soft">

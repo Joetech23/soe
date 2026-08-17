@@ -101,7 +101,7 @@ export const SUBJECTS = [
   { name: 'Phonics', note: 'Reception & Year 1', icon: 'Sparkles', tile: 'bg-tile-amber text-gold-deep' },
   { name: 'Maths', note: 'Reception to Year 6', icon: 'Calculator', tile: 'bg-tile-sky text-teal' },
   { name: 'English', note: 'Reading, writing, SPaG', icon: 'BookOpen', tile: 'bg-tile-rose text-coral' },
-  { name: '11+ Prep', note: 'Maths, English, VR & NVR', icon: 'Trophy', tile: 'bg-tile-violet text-ink-soft' },
+  { name: '11+ Prep', note: 'English and VR', icon: 'Trophy', tile: 'bg-tile-violet text-ink-soft' },
   { name: 'Creative Writing', note: 'Enrichment club', icon: 'Feather', tile: 'bg-tile-mint text-success' },
   { name: 'Book Club', note: 'Enrichment club', icon: 'Users', tile: 'bg-tile-peach text-coral' },
 ]
@@ -179,10 +179,18 @@ export const YEAR_GROUPS: YearGroup[] = [
     tint: 'teal',
   },
   {
-    title: 'Year 3 / 4',
-    subjects: 'Maths',
+    title: 'Year 3',
+    subjects: 'Maths & English',
     blurb:
-      'Times tables mastery, fractions, and multi-step problem solving, the crucial middle-primary maths years.',
+      'Times tables, fractions and confident written methods, with reading comprehension building alongside.',
+    icon: 'Calculator',
+    tint: 'teal',
+  },
+  {
+    title: 'Year 4',
+    subjects: 'Maths & English',
+    blurb:
+      'Multiplication facts to 12×12, multi-step problem solving and the writing stamina Year 4 asks for.',
     icon: 'Calculator',
     tint: 'teal',
   },
@@ -204,7 +212,7 @@ export const YEAR_GROUPS: YearGroup[] = [
   },
   {
     title: '11+ Preparation',
-    subjects: 'Maths, English, VR & NVR',
+    subjects: 'English and VR',
     blurb:
       'Structured 11+ coaching with plenty of exam technique, timed practice, and confidence-building along the way.',
     icon: 'Trophy',
@@ -283,7 +291,7 @@ export const BOOKING_SUBJECTS = [
   'Maths',
   'English',
   'Maths & English',
-  '11+ (Maths, English, VR & NVR)',
+  '11+ (English and VR)',
   'Book Club',
   'Creative Writing',
 ]
@@ -351,38 +359,63 @@ export const FAQS = [
 ]
 
 // ---------------------------------------------------------------------------
-//  Testimonials (from /testimonials) — leading-comma defect fixed
+//  Testimonials — REAL reviews, transcribed from Ms Betty's own review cards.
+//  These replaced six invented placeholders left over from the original build.
+//  `topic` is the heading she used on each card.
 // ---------------------------------------------------------------------------
-export const TESTIMONIALS = [
+export type Testimonial = {
+  topic: string
+  quote: string
+  author: string
+  /** Longer reviews get a wider tile in the masonry grid. */
+  feature?: boolean
+}
+
+export const TESTIMONIALS: Testimonial[] = [
   {
+    topic: 'Easter phonics session',
     quote:
-      'Ms Betty has completely turned things around for our son. He used to dread maths, now he actually asks when his next session is. His confidence is unrecognisable.',
-    author: 'Amara, parent of Year 3 pupil',
+      'Firstly, thank you for the Easter phonics lesson. I’m really pleased with how it went. Since the lesson, she has been eager to show me what she has learned, demonstrating a good understanding of the sounds and how to apply them. It’s been especially encouraging to see her take initiative on her own — I’ve even caught her doing independent work based on the lesson without being prompted. This shows that the learning has really stuck and that she’s developing both confidence and enthusiasm for phonics. I’m very happy with her progress and look forward to seeing her continue to build on these skills.',
+    author: 'Reception parent',
+    feature: true,
   },
   {
+    topic: 'Year 3/4 maths booster',
     quote:
-      'Warm, patient and brilliantly organised. Our daughter passed her 11+ with a smile on her face and she credits Ms Betty for believing in her the whole way.',
-    author: 'Daniel, parent of Year 6 pupil',
+      "I'm so grateful to have crossed paths with Miss Betty. I have watched my child grow in confidence with her maths and show enthusiasm for class. Miss Betty is encouraging, calm and really breaks things down in a way that my child will understand, even if it takes her a while. Miss Betty's patience and passion really shines through. Thank you.",
+    author: 'Parent of a Year 3 student',
+    feature: true,
   },
   {
+    topic: 'Holiday learning',
     quote:
-      "The Book Club is the highlight of our week. She's reading books she'd never have picked up on her own and talking about them at dinner.",
-    author: 'Priya, parent of Year 4 pupil',
+      'What can I say about Ms Betty. My son really enjoys his sessions. I was unsure about enrolling him in the summer programme, however, he did not complain and looked forward to his sessions. His reading and comprehension has come a long way and he is so proud of himself going into year two full of confidence in his abilities. Thank you Ms Betty for your patient, engaging, and encouraging attitude towards learning. We appreciate you.',
+    author: 'Parent of a Year 2 student',
+    feature: true,
   },
   {
+    topic: 'Year 4 learning',
     quote:
-      'My little one started in Reception barely knowing her letter sounds. Six months on she’s reading simple books to her baby brother. Ms Betty is magic.',
-    author: 'Sarah, parent of Reception pupil',
+      'Miss Betty has tailored her lessons to include Michael Jackson, who my daughter is obsessed with at the moment. She literally counts down the days to see Miss Betty. It’s just a joy to see my daughter find a love for learning.',
+    author: 'Parent of a Year 4 student',
   },
   {
+    topic: '11+ prep',
     quote:
-      "The Creative Writing sessions have given my son a voice. He used to say 'I can't write', now his notebooks are full of stories.",
-    author: 'James, parent of Year 5 pupil',
+      'Miss Betty kept my very shy daughter engaged from the very start. She enjoyed the lessons and managed to gain more confidence in her English comprehension than she would have at school.',
+    author: 'Parent of a Year 4 student',
   },
   {
+    topic: 'Year 6 sessions',
     quote:
-      'Kind, professional and always prepared. Ms Betty gets to know each child and it shows. Cannot recommend her highly enough.',
-    author: 'Nadia, parent of Year 2 pupil',
+      'My daughter has come a long way. She loves her sessions and I’ve seen such an eager energy to learn more. I’m so happy with the sessions.',
+    author: 'Parent of a Year 6 student',
+  },
+  {
+    topic: 'Reception phonics',
+    quote:
+      'Betty speaks softly and she’s very easy to understand. My son always looks forward to the next lesson.',
+    author: 'Parent of a Reception student',
   },
 ]
 

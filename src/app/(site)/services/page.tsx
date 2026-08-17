@@ -40,46 +40,14 @@ export default function ServicesPage() {
         <Reveal delay={120} className="relative mx-auto w-full max-w-sm md:max-w-none">
           <div className="absolute -inset-3 rotate-2 rounded-[1.6rem] bg-coral-tint/60" aria-hidden />
           <Image
-            src="/images/children-learning-together.jpg"
-            alt="Three diverse children happily learning together with a tablet and books"
+            src="/images/betty-hero.jpg"
+            alt="Ms Betty, ready to welcome your child to class"
             width={800}
             height={800}
             className="relative aspect-square w-full rounded-[1.4rem] object-cover shadow-lift"
           />
         </Reveal>
       </div>
-
-      {/* Year groups — a class register */}
-      <section className="mt-20">
-        <Reveal>
-          <span className="badge mb-4">The register</span>
-          <h2 className="font-display text-3xl font-semibold text-ink md:text-4xl">
-            Year groups
-          </h2>
-        </Reveal>
-
-        <Reveal className="mt-8 card overflow-hidden">
-          {YEAR_GROUPS.map((y, i) => (
-            <div
-              key={y.title}
-              className={`grid gap-4 p-5 sm:grid-cols-[auto_11rem_1fr] sm:items-center sm:gap-6 md:p-6 ${
-                i > 0 ? 'border-t border-line' : ''
-              }`}
-            >
-              <span className={`tile h-12 w-12 ${tile[y.tint]}`}>
-                <Icon name={y.icon} className="h-5 w-5" />
-              </span>
-              <div>
-                <div className="font-display text-lg font-semibold text-ink">
-                  {y.title}
-                </div>
-                <div className="text-sm font-medium text-teal">{y.subjects}</div>
-              </div>
-              <p className="max-w-measure text-sm text-ink-soft">{y.blurb}</p>
-            </div>
-          ))}
-        </Reveal>
-      </section>
 
       {/* Enrichment */}
       <section className="mt-20">
@@ -135,6 +103,42 @@ export default function ServicesPage() {
             </Reveal>
           ))}
         </div>
+      </section>
+
+      {/* Year groups — the register. Sits near the foot of the page: parents
+          come here for times and prices first, and read the detail after. */}
+      <section className="mt-20">
+        <Reveal>
+          <span className="badge mb-4">The register</span>
+          <h2 className="font-display text-3xl font-semibold text-ink md:text-4xl">
+            Year groups
+          </h2>
+          <p className="mt-3 max-w-measure text-ink-soft">
+            What we cover at each stage, from first phonics through to 11+.
+          </p>
+        </Reveal>
+
+        <Reveal className="mt-8 card overflow-hidden">
+          {YEAR_GROUPS.map((y, i) => (
+            <div
+              key={y.title}
+              className={`grid gap-4 p-5 sm:grid-cols-[auto_11rem_1fr] sm:items-center sm:gap-6 md:p-6 ${
+                i > 0 ? 'border-t border-line' : ''
+              }`}
+            >
+              <span className={`tile h-12 w-12 ${tile[y.tint]}`}>
+                <Icon name={y.icon} className="h-5 w-5" />
+              </span>
+              <div>
+                <div className="font-display text-lg font-semibold text-ink">
+                  {y.title}
+                </div>
+                <div className="text-sm font-medium text-teal">{y.subjects}</div>
+              </div>
+              <p className="max-w-measure text-sm text-ink-soft">{y.blurb}</p>
+            </div>
+          ))}
+        </Reveal>
       </section>
 
       <Reveal className="mt-16">

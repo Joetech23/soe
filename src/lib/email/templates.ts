@@ -117,6 +117,86 @@ export function orderReceiptEmail(args: {
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Parent portal — new homework                                              */
+/* -------------------------------------------------------------------------- */
+export function homeworkPostedEmail(args: {
+  childName: string
+  title: string
+  description?: string | null
+  dueDate?: string | null
+  hasAttachment: boolean
+  portalUrl: string
+}) {
+  const due = args.dueDate
+    ? new Date(args.dueDate).toLocaleDateString('en-GB', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+      })
+    : null
+
+  return {
+    subject: `New homework for ${args.childName}: ${args.title}`,
+    html: shell(
+      `
+      <p style="margin:0 0 14px">Hello,</p>
+      <p style="margin:0 0 18px">I've set some new work for <strong>${escapeHtml(args.childName)}</strong>.</p>
+
+      <div style="background:#EFF3F1;border-radius:12px;padding:16px 18px;margin:0 0 20px">
+        <div style="font-size:16px;font-weight:800;color:${BRAND.ink}">${escapeHtml(args.title)}</div>
+        ${args.description ? `<p style="margin:8px 0 0;font-size:14px;color:${BRAND.muted}">${escapeHtml(args.description)}</p>` : ''}
+        ${due ? `<p style="margin:10px 0 0;font-size:13px;font-weight:700;color:${BRAND.coral}">Due ${escapeHtml(due)}</p>` : ''}
+        ${args.hasAttachment ? `<p style="margin:8px 0 0;font-size:13px;color:${BRAND.muted}">📎 There's a file to download in the portal.</p>` : ''}
+      </div>
+
+      <p style="margin:0 0 22px">${button(args.portalUrl, 'Open the parent portal')}</p>
+      <p style="margin:0;font-size:13px;color:${BRAND.muted}">Any questions, just reply to this email or send me a WhatsApp.</p>
+      <p style="margin:20px 0 0">Thanks,<br><strong>${site.owner}</strong></p>
+    `,
+      `New homework for ${args.childName}: ${args.title}`
+    ),
+    text: `New homework for ${args.childName}\n\n${args.title}\n${args.description ?? ''}\n${due ? `Due ${due}\n` : ''}\nOpen the portal: ${args.portalUrl}\n\n${site.owner}`,
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Parent portal — new lesson feedback                                       */
+/* -------------------------------------------------------------------------- */
+export function feedbackPostedEmail(args: {
+  childName: string
+  note: string
+  lessonDate?: string | null
+  portalUrl: string
+}) {
+  const when = args.lessonDate
+    ? new Date(args.lessonDate).toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+    : null
+
+  return {
+    subject: `Lesson feedback for ${args.childName}`,
+    html: shell(
+      `
+      <p style="margin:0 0 14px">Hello,</p>
+      <p style="margin:0 0 18px">Here's how <strong>${escapeHtml(args.childName)}</strong> got on${when ? ` on ${escapeHtml(when)}` : ''}.</p>
+
+      <blockquote style="margin:0 0 20px;padding:2px 0 2px 16px;border-left:3px solid ${BRAND.teal};color:${BRAND.ink};font-size:15px;line-height:1.7">
+        ${escapeHtml(args.note).replace(/\n/g, '<br>')}
+      </blockquote>
+
+      <p style="margin:0 0 22px">${button(args.portalUrl, 'See all their notes')}</p>
+      <p style="margin:20px 0 0">Best wishes,<br><strong>${site.owner}</strong></p>
+    `,
+      `Lesson feedback for ${args.childName}`
+    ),
+    text: `Lesson feedback for ${args.childName}${when ? ` — ${when}` : ''}\n\n${args.note}\n\nPortal: ${args.portalUrl}\n\n${site.owner}`,
+  }
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Owner notification — a sale just happened                                 */
 /* -------------------------------------------------------------------------- */
 export function ownerSaleEmail(args: {

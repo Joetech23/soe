@@ -108,38 +108,28 @@ export default async function HomePage() {
             </Reveal>
 
             <Reveal delay={320}>
-              <div className="mt-8 flex items-center gap-4">
-                <div className="flex -space-x-3">
-                  {['group-tuition-1', 'group-tuition-2', 'group-tuition-3'].map((img) => (
-                    <span
-                      key={img}
-                      className="relative h-10 w-10 overflow-hidden rounded-full ring-[3px] ring-canvas"
-                    >
-                      <Image
-                        src={`/images/${img}.jpg`}
-                        alt=""
-                        fill
-                        sizes="40px"
-                        className="object-cover"
-                      />
-                    </span>
-                  ))}
-                </div>
-                <div>
+              {/* Real review count rather than stock avatars — the number is
+                  verifiable on the Kind Words page, faces would not be. */}
+              <div className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-2">
+                <div className="flex items-center gap-2">
                   <div className="flex gap-0.5" aria-label="5 out of 5 stars">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
                         key={i}
-                        className="h-3.5 w-3.5 text-gold"
+                        className="h-4 w-4 text-gold"
                         fill="currentColor"
                         aria-hidden
                       />
                     ))}
                   </div>
-                  <p className="mt-0.5 text-sm text-ink-muted">
-                    Loved by families across every primary year
-                  </p>
+                  <span className="font-display text-base font-bold text-ink">5.0</span>
                 </div>
+                <Link
+                  href="/testimonials"
+                  className="text-sm text-ink-muted underline-offset-4 hover:text-teal hover:underline"
+                >
+                  from {TESTIMONIALS.length} parent reviews
+                </Link>
               </div>
             </Reveal>
           </div>
@@ -152,8 +142,8 @@ export default async function HomePage() {
                 aria-hidden
               />
               <Image
-                src="/images/betty-hero.jpg"
-                alt="Ms Betty, primary school tutor, smiling and holding a tablet"
+                src="/images/betty-portrait.jpg"
+                alt="Ms Betty, primary school tutor"
                 width={900}
                 height={900}
                 priority
@@ -182,7 +172,7 @@ export default async function HomePage() {
                   </span>
                   <div>
                     <div className="text-xs font-bold text-ink">11+ ready</div>
-                    <div className="text-[0.68rem] text-ink-muted">VR &amp; NVR too</div>
+                    <div className="text-[0.68rem] text-ink-muted">English &amp; VR</div>
                   </div>
                 </div>
               </div>
@@ -311,8 +301,8 @@ export default async function HomePage() {
               aria-hidden
             />
             <Image
-              src="/images/confident-reader.jpg"
-              alt="A confident young child holding a book and smiling"
+              src="/images/betty-teaching.jpg"
+              alt="Ms Betty teaching place value on a whiteboard during a Zoom lesson"
               width={900}
               height={900}
               className="relative aspect-[4/3] w-full rounded-xl2 object-cover shadow-lift"
@@ -416,8 +406,8 @@ export default async function HomePage() {
                   aria-hidden
                 />
                 <Image
-                  src="/images/betty-teaching.jpg"
-                  alt="Ms Betty teaching place value on a whiteboard during an online lesson"
+                  src="/images/betty-phonics.jpg"
+                  alt="Ms Betty pointing to a phonics sound card during a lesson"
                   width={700}
                   height={700}
                   className="relative aspect-square w-full rounded-full object-cover shadow-pop"
@@ -452,6 +442,66 @@ export default async function HomePage() {
             </div>
           </div>
         </Reveal>
+      </section>
+
+      {/* ───────────────────── SMALL GROUPS (real pupils) ───────────────────── */}
+      <section className="shell pb-8 pt-8">
+        <div className="grid items-center gap-10 lg:grid-cols-2">
+          <Reveal dir="left">
+            <span className="badge mb-4">Small groups</span>
+            <h2 className="text-balance font-display text-3xl font-extrabold tracking-tight text-ink md:text-4xl">
+              Learning together, <span className="accent">side by side</span>
+            </h2>
+            <p className="mt-4 max-w-measure leading-relaxed text-ink-soft">
+              Groups stay small on purpose. Children hear each other think, share
+              ideas and cheer each other on — and every child still gets time with
+              Ms Betty in every session.
+            </p>
+            <ul className="mt-6 space-y-2.5 text-sm text-ink-soft">
+              {[
+                'Friendly groups from £25 per week',
+                'Age-appropriate session lengths, 30 to 50 minutes',
+                'One-to-one available when a child needs it',
+              ].map((f) => (
+                <li key={f} className="flex items-start gap-2.5">
+                  <span className="tile mt-0.5 h-5 w-5 shrink-0 bg-tile-mint text-success">
+                    <Check className="h-3 w-3" aria-hidden />
+                  </span>
+                  {f}
+                </li>
+              ))}
+            </ul>
+          </Reveal>
+
+          <Reveal dir="right" delay={120}>
+            <div className="grid grid-cols-2 gap-4">
+              <Image
+                src="/images/pupils-reading.jpg"
+                alt="A teacher reading a story to a small group of primary-aged children"
+                width={900}
+                height={1100}
+                className="col-span-2 aspect-[4/3] w-full rounded-xl2 object-cover shadow-lift"
+              />
+              <Image
+                src="/images/pupils-group.jpg"
+                alt="Young children taking part in a group music and phonics activity"
+                width={700}
+                height={700}
+                className="aspect-square w-full rounded-card object-cover shadow-card"
+              />
+              <div className="grid place-items-center rounded-card bg-teal p-5 text-center text-white shadow-card">
+                <div>
+                  <div className="font-display text-3xl font-extrabold">
+                    <CountUp to={7} />
+                  </div>
+                  <div className="mt-1 text-xs font-semibold text-white/85">
+                    year groups, Reception to Year 6
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Reveal>
+        </div>
       </section>
 
       {/* ───────────────────────── WORD OF THE DAY ───────────────────────── */}
@@ -518,69 +568,57 @@ export default async function HomePage() {
               What families <span className="accent">say</span>
             </h2>
 
-            <div className="mt-7 flex flex-col items-center gap-3">
-              <div className="flex -space-x-3">
-                {['group-tuition-2', 'confident-reader', 'group-tuition-3', 'group-tuition-1'].map(
-                  (img) => (
-                    <span
-                      key={img}
-                      className="relative h-11 w-11 overflow-hidden rounded-full ring-[3px] ring-surface"
-                    >
-                      <Image
-                        src={`/images/${img}.jpg`}
-                        alt=""
-                        fill
-                        sizes="44px"
-                        className="object-cover"
-                      />
-                    </span>
-                  )
-                )}
+            <div className="mt-7 flex items-center justify-center gap-2.5">
+              <div className="flex gap-0.5" aria-label="5 out of 5 stars">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star
+                    key={i}
+                    className="h-5 w-5 text-gold"
+                    fill="currentColor"
+                    aria-hidden
+                  />
+                ))}
               </div>
-              <div className="flex items-center gap-2">
-                <div className="flex gap-0.5" aria-label="5 out of 5 stars">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className="h-4 w-4 text-gold"
-                      fill="currentColor"
-                      aria-hidden
-                    />
-                  ))}
-                </div>
-                <span className="text-sm font-bold text-ink">
-                  <CountUp to={5} decimals={1} /> from every review on file
-                </span>
-              </div>
+              <span className="font-display text-lg font-bold text-ink">
+                <CountUp to={5} decimals={1} />
+              </span>
+              <span className="text-sm text-ink-muted">
+                from {TESTIMONIALS.length} parent reviews
+              </span>
             </div>
           </Reveal>
 
           <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {TESTIMONIALS.slice(0, 3).map((t, i) => (
-              <Reveal key={t.author} delay={i * 90}>
-                <figure className="card h-full p-6">
-                  <Quote className="h-7 w-7 text-teal/25" aria-hidden />
-                  <blockquote className="mt-3 leading-relaxed text-ink">
-                    <p>{t.quote}</p>
-                  </blockquote>
-                  <figcaption className="mt-5 flex items-center justify-between gap-3 border-t border-line pt-4">
-                    <span className="text-sm font-bold text-teal-deep">
-                      {t.author}
-                    </span>
-                    <span className="flex gap-0.5" aria-label="5 out of 5 stars">
-                      {Array.from({ length: 5 }).map((_, s) => (
-                        <Star
-                          key={s}
-                          className="h-3.5 w-3.5 text-gold"
-                          fill="currentColor"
-                          aria-hidden
-                        />
-                      ))}
-                    </span>
-                  </figcaption>
-                </figure>
-              </Reveal>
-            ))}
+            {TESTIMONIALS.filter((t) => !t.feature)
+              .slice(0, 3)
+              .map((t, i) => (
+                <Reveal key={t.topic} delay={i * 90}>
+                  <figure className="card flex h-full flex-col p-6">
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="badge">{t.topic}</span>
+                      <Quote className="h-6 w-6 shrink-0 text-teal/25" aria-hidden />
+                    </div>
+                    <blockquote className="mt-4 flex-1 leading-relaxed text-ink">
+                      <p>{t.quote}</p>
+                    </blockquote>
+                    <figcaption className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-4">
+                      <span className="text-sm font-bold text-teal-deep">
+                        {t.author}
+                      </span>
+                      <span className="flex gap-0.5" aria-label="5 out of 5 stars">
+                        {Array.from({ length: 5 }).map((_, s) => (
+                          <Star
+                            key={s}
+                            className="h-3.5 w-3.5 text-gold"
+                            fill="currentColor"
+                            aria-hidden
+                          />
+                        ))}
+                      </span>
+                    </figcaption>
+                  </figure>
+                </Reveal>
+              ))}
           </div>
 
           <Reveal className="mt-10 text-center">
@@ -606,8 +644,8 @@ export default async function HomePage() {
             </p>
             <div className="relative mt-8 hidden lg:block">
               <Image
-                src="/images/group-tuition-2.jpg"
-                alt="Two children learning together with a tablet"
+                src="/images/betty-seated.jpg"
+                alt="Ms Betty in her tutoring room"
                 width={800}
                 height={640}
                 className="aspect-[5/4] w-full rounded-xl2 object-cover shadow-lift"

@@ -10,7 +10,7 @@ import {
   Users,
   Inbox,
 } from 'lucide-react'
-import { formatPrice } from '@/lib/utils'
+import { formatMoney, formatPrice } from '@/lib/utils'
 import { site } from '@/lib/site'
 import { getStats, getRecentOrders, getProductsWithSales } from '@/lib/admin/queries'
 import { styleFor } from '@/lib/shop'
@@ -63,7 +63,7 @@ export default async function AdminDashboard() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Revenue this month"
-          value={formatPrice(stats.revenuePence)}
+          value={formatMoney(stats.revenuePence)}
           icon={Banknote}
           tile="bg-tile-mint text-success"
         />

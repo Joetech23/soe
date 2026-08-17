@@ -1,4 +1,4 @@
-import { GraduationCap, FileText, MessageSquare, Ticket } from 'lucide-react'
+import { GraduationCap, FileText, MessageSquare, Ticket, Download } from 'lucide-react'
 import { getMyChildren } from '@/lib/account'
 import { site, whatsappHref } from '@/lib/site'
 import { RedeemInvite } from '@/components/account/redeem-invite'
@@ -76,15 +76,26 @@ export default async function ChildPage() {
                       {h.description && (
                         <p className="mt-1 text-sm text-ink-soft">{h.description}</p>
                       )}
-                      {h.dueDate && (
-                        <p className="mt-1.5 text-xs font-semibold text-coral">
-                          Due{' '}
-                          {new Date(h.dueDate).toLocaleDateString('en-GB', {
-                            day: 'numeric',
-                            month: 'short',
-                          })}
-                        </p>
-                      )}
+                      <div className="mt-2 flex flex-wrap items-center gap-3">
+                        {h.dueDate && (
+                          <span className="text-xs font-semibold text-coral">
+                            Due{' '}
+                            {new Date(h.dueDate).toLocaleDateString('en-GB', {
+                              day: 'numeric',
+                              month: 'short',
+                            })}
+                          </span>
+                        )}
+                        {h.filePath && (
+                          <a
+                            href={`/api/homework-file?item=${h.id}`}
+                            className="inline-flex min-h-[36px] items-center gap-1.5 rounded-pill bg-teal px-3.5 text-xs font-bold text-white transition-colors hover:bg-teal-deep"
+                          >
+                            <Download className="h-3.5 w-3.5" aria-hidden />
+                            Download
+                          </a>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>

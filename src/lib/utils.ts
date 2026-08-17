@@ -13,6 +13,17 @@ export function formatPrice(pence: number): string {
 }
 
 /**
+ * Money as money — always a £ figure, never the word "Free".
+ *
+ * Use for totals, revenue and takings. `formatPrice` is for a *product's*
+ * price, where zero means "this costs nothing"; on a revenue line zero means
+ * "we took nothing", and "Revenue this month: Free" is nonsense.
+ */
+export function formatMoney(pence: number): string {
+  return `£${(pence / 100).toFixed(2)}`
+}
+
+/**
  * Absolute site origin, safe on server and client.
  *
  * Defensive on purpose: this feeds `new URL()` in the root layout's

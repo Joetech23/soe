@@ -1,17 +1,17 @@
 import type { Metadata } from 'next'
-import { Bricolage_Grotesque, Plus_Jakarta_Sans } from 'next/font/google'
+import { League_Spartan, Plus_Jakarta_Sans } from 'next/font/google'
 import { Toaster } from 'sonner'
 import './globals.css'
 import { site } from '@/lib/site'
 import { siteUrl } from '@/lib/utils'
 
 /**
- * Display: Bricolage Grotesque — a modern variable grotesque with real
- * character in its curves, so headings feel crafted rather than system-default.
+ * Display: League Spartan — a geometric sans with tight, confident caps that
+ * matches the weight of Ms Betty's own promotional graphics.
  * Body: Plus Jakarta Sans — geometric, friendly and highly legible at small
  * sizes, which is what a parent skim-reading on a phone actually needs.
  */
-const display = Bricolage_Grotesque({
+const display = League_Spartan({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-display',
