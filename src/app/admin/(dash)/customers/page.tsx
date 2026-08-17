@@ -32,6 +32,7 @@ export default async function AdminCustomers() {
               <thead>
                 <tr className="border-b border-line text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">
                   <th className="px-5 py-3">Customer</th>
+                  <th className="px-5 py-3">Phone</th>
                   <th className="px-5 py-3">Account</th>
                   <th className="px-5 py-3">Marketing</th>
                   <th className="px-5 py-3">First seen</th>
@@ -56,6 +57,20 @@ export default async function AdminCustomers() {
                           <div className="truncate text-xs text-ink-muted">{c.email}</div>
                         </div>
                       </div>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      {c.phone ? (
+                        // A tap-to-call link, because the reason to store a
+                        // parent's number is to ring them.
+                        <a
+                          href={`tel:${c.phone}`}
+                          className="whitespace-nowrap font-medium text-teal hover:text-coral"
+                        >
+                          {c.phone}
+                        </a>
+                      ) : (
+                        <span className="text-ink-muted">—</span>
+                      )}
                     </td>
                     <td className="px-5 py-3.5">
                       {c.user_id ? (

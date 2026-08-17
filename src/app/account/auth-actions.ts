@@ -129,6 +129,62 @@ function confirmUrl(
   return siteUrl(`/auth/confirm?${q.toString()}`)
 }
 
+/**
+ * Mirror the sign-up details onto the customer record.
+ *
+ * Without this the name and phone would live only on the auth user, where Ms
+ * Betty has no way to see them — and collecting a phone number nobody can look
+ * up is worse than not asking. `customers` is email-keyed and already drives
+ * the Customers page and the admin search, so this puts the details exactly
+ * where she would go looking.
+ *
+ * Never throws: a CRM row must not be able to fail a registration.
+ */
+async function upsertCustomer(args: {
+  email: string
+  fullName: string
+  phone: string
+  userId?: string | null
+}): Promise<void> {
+  try {
+    const db = createAdminClient()
+    const { data: existing } = await db
+      .from('customers')
+      .select('id')
+      .eq('email', args.email)
+      .maybeSingle()
+
+    const now = new Date().toISOString()
+    if (existing) {
+      await db
+        .from('customers')
+        .update({
+          full_name: args.fullName,
+          ...(args.phone ? { phone: args.phone } : {}),
+          ...(args.userId ? { user_id: args.userId } : {}),
+          last_seen_at: now,
+        })
+        .eq('id', existing.id)
+      return
+    }
+
+    await db.from('customers').insert({
+      email: args.email,
+      full_name: args.fullName,
+      phone: args.phone || null,
+      user_id: args.userId ?? null,
+      marketing_consent: false,
+      first_seen_at: now,
+      last_seen_at: now,
+    })
+  } catch (err) {
+    console.warn(
+      '[auth] customer record not written:',
+      err instanceof Error ? err.message : err
+    )
+  }
+}
+
 /** Does an account already exist for this address? */
 async function findUserByEmail(email: string) {
   const db = createAdminClient()
@@ -210,13 +266,19 @@ export async function startRegistration(fd: FormData): Promise<AuthResult> {
 
     // 'off': create the account confirmed and let them straight in.
     if (settings.firstLoginVerification === 'off') {
-      const { error } = await db.auth.admin.createUser({
+      const { data: made, error } = await db.auth.admin.createUser({
         email,
         password,
         email_confirm: true,
         user_metadata: profile,
       })
       if (error) throw error
+      await upsertCustomer({
+        email,
+        fullName,
+        phone: phone.value,
+        userId: made.user?.id,
+      })
       audit('verified', email, 'auto-confirmed (verification off)')
       return {
         ok: true,
@@ -234,6 +296,13 @@ export async function startRegistration(fd: FormData): Promise<AuthResult> {
       options: { data: profile },
     })
     if (error) throw error
+
+    await upsertCustomer({
+      email,
+      fullName,
+      phone: phone.value,
+      userId: link?.user?.id,
+    })
 
     if (settings.firstLoginVerification === 'link') {
       const hashed = link?.properties?.hashed_token

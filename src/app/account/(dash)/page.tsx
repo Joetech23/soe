@@ -16,7 +16,15 @@ export default async function AccountOverview() {
     getMyChildren(),
   ])
 
-  const firstName = user?.email?.split('@')[0] ?? 'there'
+  // Prefer the name they gave at sign-up. The email local part was a stand-in
+  // from before the form collected a name, and it produced greetings like
+  // "Hello, soetuition".
+  const fullName =
+    typeof user?.user_metadata?.full_name === 'string'
+      ? user.user_metadata.full_name.trim()
+      : ''
+  const firstName =
+    fullName.split(' ')[0] || user?.email?.split('@')[0] || 'there'
 
   const cards = [
     {

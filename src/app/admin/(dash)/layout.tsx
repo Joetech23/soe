@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { AdminShell } from '@/components/admin/admin-shell'
-import { THEME_COOKIE } from '@/components/admin/theme-toggle'
+import { THEME_COOKIE, parseTheme } from '@/lib/admin/theme'
 import { createClient } from '@/lib/supabase/server'
 import { hasRole } from '@/lib/supabase/rpc'
 import { site } from '@/lib/site'
@@ -31,7 +31,7 @@ export default async function DashLayout({
     if (!isAdmin) redirect('/account')
   }
 
-  const theme = cookies().get(THEME_COOKIE)?.value === 'dark' ? 'dark' : 'light'
+  const theme = parseTheme(cookies().get(THEME_COOKIE)?.value)
   // Never let a slow count block the whole admin from rendering.
   const notificationCount = await getNotificationCount().catch(() => 0)
 

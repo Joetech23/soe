@@ -5,7 +5,7 @@ import { Menu, LogOut } from 'lucide-react'
 import { AdminSidebar } from './admin-sidebar'
 import { AdminSearch } from './admin-search'
 import { AdminNotifications } from './admin-notifications'
-import { ThemeToggle } from './theme-toggle'
+import { ThemeToggle, type Theme } from './theme-toggle'
 
 /**
  * Admin chrome: fixed sidebar + sticky topbar, content scrolls between them.
@@ -19,16 +19,19 @@ export function AdminShell({
   children,
   ownerName = 'Ms Betty',
   ownerEmail = 'soetuition@gmail.com',
-  theme = 'light',
+  theme: initialTheme = 'light',
   notificationCount = 0,
 }: {
   children: React.ReactNode
   ownerName?: string
   ownerEmail?: string
-  theme?: 'light' | 'dark'
+  theme?: Theme
   notificationCount?: number
 }) {
   const [open, setOpen] = useState(false)
+  // Owned here, seeded from the server's cookie read. The shell stays mounted
+  // across admin navigations, so the choice survives without a round trip.
+  const [theme, setTheme] = useState<Theme>(initialTheme)
 
   return (
     <div data-theme={theme} className="min-h-screen bg-canvas">
@@ -49,7 +52,7 @@ export function AdminShell({
             <AdminSearch />
 
             <div className="ml-auto flex items-center gap-2">
-              <ThemeToggle initial={theme} />
+              <ThemeToggle theme={theme} onChange={setTheme} />
               <AdminNotifications initialCount={notificationCount} />
               <div className="flex items-center gap-2.5 rounded-pill border border-line bg-surface py-1 pl-1 pr-3">
                 <span className="grid h-8 w-8 place-items-center rounded-full bg-teal text-sm font-bold text-white">

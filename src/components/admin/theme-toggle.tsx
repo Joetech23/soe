@@ -1,9 +1,9 @@
 'use client'
 
 import { Moon, Sun } from 'lucide-react'
+import { THEME_COOKIE, type Theme } from '@/lib/admin/theme'
 
-export const THEME_COOKIE = 'soe-admin-theme'
-export type Theme = 'light' | 'dark'
+export type { Theme }
 
 /**
  * Light/dark switch for the admin.
