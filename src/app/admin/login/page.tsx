@@ -1,11 +1,12 @@
 'use client'
 
 import { Suspense, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Lock } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import { navigateAfterAuth } from '@/lib/auth-navigate'
 import { LogoMark } from '@/components/logo'
 
 export default function AdminLogin() {
@@ -17,7 +18,6 @@ export default function AdminLogin() {
 }
 
 function LoginForm() {
-  const router = useRouter()
   const params = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -30,11 +30,11 @@ function LoginForm() {
       const supabase = createClient()
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
-      router.push(params.get('next') ?? '/admin')
-      router.refresh()
+      // Full navigation, not router.push — see navigateAfterAuth.
+      navigateAfterAuth(params.get('next') ?? '/admin')
+      return // keep the spinner up; the document is being replaced
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Could not sign in.')
-    } finally {
       setLoading(false)
     }
   }

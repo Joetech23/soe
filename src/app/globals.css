@@ -3,9 +3,99 @@
 @tailwind utilities;
 
 @layer base {
+  /**
+   * Colour tokens as RGB channels. Tailwind reads these through
+   * rgb(var(--c-x) / <alpha-value>), so opacity utilities keep working.
+   *
+   * Dark mode is the same names with different values, applied by
+   * [data-theme='dark'] — currently only on the admin shell, so the public
+   * site stays light regardless of what Ms Betty prefers behind the scenes.
+   */
   :root {
     color-scheme: light;
     --shell-x: 1.25rem;
+
+    --c-ink: 18 24 31;
+    --c-ink-soft: 57 67 79;
+    --c-ink-muted: 107 118 132;
+
+    --c-canvas: 245 247 246;
+    --c-surface: 255 255 255;
+    --c-surface-soft: 251 252 252;
+    --c-surface-sunk: 239 243 241;
+
+    --c-line: 229 234 232;
+    --c-line-soft: 238 242 240;
+
+    --c-coral-deep: 196 68 31;
+    --c-coral-tint: 253 237 230;
+    --c-teal-deep: 18 85 78;
+    --c-teal-tint: 227 241 239;
+    --c-gold-deep: 176 124 21;
+    --c-gold-tint: 251 241 217;
+
+    --c-tile-rose: 253 235 229;
+    --c-tile-sky: 230 241 252;
+    --c-tile-amber: 252 242 222;
+    --c-tile-violet: 240 235 250;
+    --c-tile-mint: 227 244 235;
+    --c-tile-peach: 252 238 228;
+
+    --c-success: 21 133 92;
+    --c-success-tint: 227 244 235;
+    --c-warn: 201 122 8;
+    --c-warn-tint: 251 241 220;
+  }
+
+  /**
+   * Dark.
+   *
+   * Not an inversion: the surfaces are warm-neutral rather than pure grey so
+   * the coral still sits comfortably on them, and the "deep" brand variants
+   * become LIGHTER, because in light mode they are dark text on a pale tint
+   * and in dark mode they have to be pale text on a deep tint. Inverting the
+   * lightness of the backgrounds without also flipping those would leave
+   * text-teal-deep unreadable on bg-teal-tint.
+   */
+  [data-theme='dark'] {
+    color-scheme: dark;
+
+    --c-ink: 232 237 241;
+    --c-ink-soft: 180 191 201;
+    --c-ink-muted: 132 146 160;
+
+    --c-canvas: 14 20 24;
+    --c-surface: 22 29 35;
+    --c-surface-soft: 26 34 41;
+    --c-surface-sunk: 33 42 50;
+
+    --c-line: 42 52 61;
+    --c-line-soft: 34 43 51;
+
+    --c-coral-deep: 255 152 120;
+    --c-coral-tint: 58 30 21;
+    --c-teal-deep: 95 197 182;
+    --c-teal-tint: 16 48 45;
+    --c-gold-deep: 232 190 95;
+    --c-gold-tint: 54 42 17;
+
+    --c-tile-rose: 52 28 22;
+    --c-tile-sky: 22 39 58;
+    --c-tile-amber: 51 41 15;
+    --c-tile-violet: 38 32 58;
+    --c-tile-mint: 20 48 31;
+    --c-tile-peach: 51 35 26;
+
+    --c-success: 78 203 143;
+    --c-success-tint: 20 48 31;
+    --c-warn: 232 169 63;
+    --c-warn-tint: 51 41 15;
+  }
+
+  /* Soft shadows vanish on dark surfaces; lean on the borders instead. */
+  [data-theme='dark'] .card,
+  [data-theme='dark'] .shadow-card {
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.4);
   }
 
   html {

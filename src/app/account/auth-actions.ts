@@ -55,16 +55,23 @@ function ip(): string {
   return xff?.split(',')[0].trim() ?? h.get('x-real-ip') ?? 'unknown'
 }
 
-/** Audit trail. Never throws and never records a code. */
-async function audit(kind: string, email: string | null, detail?: string) {
+/**
+ * Audit trail. Never throws and never records a code.
+ *
+ * Deliberately NOT awaited by its callers: this is a nice-to-have record, and
+ * making every sign-in wait on an extra insert is exactly the kind of thing
+ * that makes logging in feel slow. Errors are swallowed here so an unhandled
+ * rejection cannot escape.
+ */
+function audit(kind: string, email: string | null, detail?: string): void {
   if (!hasAdminCredentials()) return
-  try {
-    await createAdminClient()
-      .from('auth_events')
-      .insert({ email, kind, detail: detail?.slice(0, 300) ?? null, ip: ip() })
-  } catch {
-    /* the table may not exist yet — auditing must never block a sign-in */
-  }
+  void createAdminClient()
+    .from('auth_events')
+    .insert({ email, kind, detail: detail?.slice(0, 300) ?? null, ip: ip() })
+    .then(
+      () => {},
+      () => {} // table may not exist yet — auditing must never block a sign-in
+    )
 }
 
 function cleanEmail(raw: FormDataEntryValue | null): string {
@@ -76,6 +83,32 @@ function cleanEmail(raw: FormDataEntryValue | null): string {
 
 function looksLikeEmail(v: string): boolean {
   return /^[^\s@]+@[^\s@.]+\.[^\s@]{2,}$/.test(v)
+}
+
+/**
+ * Normalise a UK mobile to a storable form without being precious about it.
+ *
+ * Parents type numbers every way imaginable — spaces, brackets, +44, leading
+ * 0 — and rejecting a real number because of a bracket is worse than storing a
+ * slightly odd one. So we strip formatting, accept anything that could be a
+ * phone number, and only reject what plainly cannot be.
+ */
+function cleanPhone(raw: FormDataEntryValue | null): { ok: boolean; value: string } {
+  const trimmed = String(raw ?? '').trim()
+  if (!trimmed) return { ok: true, value: '' } // optional
+
+  const digits = trimmed.replace(/[^\d+]/g, '')
+  if (digits.replace(/\D/g, '').length < 7 || digits.length > 20) {
+    return { ok: false, value: trimmed }
+  }
+  return { ok: true, value: digits }
+}
+
+function cleanName(raw: FormDataEntryValue | null): string {
+  return String(raw ?? '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .slice(0, 80)
 }
 
 /**
@@ -111,11 +144,22 @@ export async function startRegistration(fd: FormData): Promise<AuthResult> {
   const email = cleanEmail(fd.get('email'))
   const password = String(fd.get('password') ?? '')
   const invite = String(fd.get('invite') ?? '').trim().toUpperCase()
+  const fullName = cleanName(fd.get('fullName'))
+  const phone = cleanPhone(fd.get('phone'))
 
+  if (fullName.length < 2) return { ok: false, message: 'Please tell us your name.' }
   if (!looksLikeEmail(email)) return { ok: false, message: 'Enter a valid email address.' }
+  if (!phone.ok) {
+    return { ok: false, message: "That phone number doesn't look right — or leave it blank." }
+  }
   if (password.length < 8) {
     return { ok: false, message: 'Choose a password of at least 8 characters.' }
   }
+
+  /** Stored on the auth user so it travels with the account. */
+  const profile: Record<string, string> = { full_name: fullName }
+  if (phone.value) profile.phone = phone.value
+  if (invite) profile.pending_invite = invite
   if (!hasAdminCredentials()) {
     return { ok: false, message: 'Sign-up is temporarily unavailable. Please try later.' }
   }
@@ -133,7 +177,7 @@ export async function startRegistration(fd: FormData): Promise<AuthResult> {
   const byEmail = hit(`reg:${email}`, 4, 60 * 60 * 1000)
   const byIp = hit(`reg-ip:${ip()}`, 12, 60 * 60 * 1000)
   if (!byEmail.ok || !byIp.ok) {
-    await audit('failed', email, 'registration rate limited')
+    audit('failed', email, 'registration rate limited')
     return { ok: false, message: 'Too many attempts. Please try again a bit later.' }
   }
 
@@ -158,7 +202,7 @@ export async function startRegistration(fd: FormData): Promise<AuthResult> {
         })
         await sendEmail({ to: email, ...tpl, tag: 'account-exists' })
       }
-      await audit('link_sent', email, 'registration attempt on existing account')
+      audit('link_sent', email, 'registration attempt on existing account')
       return { ok: true, step: 'link', email, message: GENERIC_SENT }
     }
 
@@ -170,10 +214,10 @@ export async function startRegistration(fd: FormData): Promise<AuthResult> {
         email,
         password,
         email_confirm: true,
-        user_metadata: invite ? { pending_invite: invite } : {},
+        user_metadata: profile,
       })
       if (error) throw error
-      await audit('verified', email, 'auto-confirmed (verification off)')
+      audit('verified', email, 'auto-confirmed (verification off)')
       return {
         ok: true,
         step: 'done',
@@ -187,7 +231,7 @@ export async function startRegistration(fd: FormData): Promise<AuthResult> {
       type: 'signup',
       email,
       password,
-      options: { data: invite ? { pending_invite: invite } : {} },
+      options: { data: profile },
     })
     if (error) throw error
 
@@ -200,7 +244,7 @@ export async function startRegistration(fd: FormData): Promise<AuthResult> {
       if (sent.status === 'failed') {
         return { ok: false, message: 'We could not send that email. Please try again.' }
       }
-      await audit('link_sent', email, 'registration')
+      audit('link_sent', email, 'registration')
       return {
         ok: true,
         step: 'link',
@@ -216,7 +260,7 @@ export async function startRegistration(fd: FormData): Promise<AuthResult> {
     if (sent.status === 'failed') {
       return { ok: false, message: 'We could not send that code. Please try again.' }
     }
-    await audit('code_sent', email, 'registration')
+    audit('code_sent', email, 'registration')
     return {
       ok: true,
       step: 'code',
@@ -226,7 +270,7 @@ export async function startRegistration(fd: FormData): Promise<AuthResult> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'unknown'
     console.error('[auth] startRegistration failed:', msg)
-    await audit('failed', email, msg)
+    audit('failed', email, msg)
     if (/password/i.test(msg) && /weak|short|characters/i.test(msg)) {
       return { ok: false, message: 'Please choose a stronger password.' }
     }
@@ -250,7 +294,7 @@ export async function verifyCode(
   // Tight limit: this is the one endpoint where guessing gets you a session.
   const guard = hit(`otp:${email}`, 8, 15 * 60 * 1000)
   if (!guard.ok) {
-    await audit('failed', email, 'otp rate limited')
+    audit('failed', email, 'otp rate limited')
     return {
       ok: false,
       message: 'Too many attempts. Wait a few minutes, then request a new code.',
@@ -267,8 +311,8 @@ export async function verifyCode(
   for (const type of ['signup', 'magiclink', 'email'] as const) {
     const { data, error } = await supabase.auth.verifyOtp({ email, token: code, type })
     if (!error && data.session) {
-      const linkedChild = await redeemPendingInvite()
-      await audit('verified', email, 'code')
+      const linkedChild = await redeemPendingInvite(data.user ?? undefined)
+      audit('verified', email, 'code')
       return {
         ok: true,
         step: 'done',
@@ -283,7 +327,7 @@ export async function verifyCode(
       : error.message
   }
 
-  await audit('failed', email, 'bad code')
+  audit('failed', email, 'bad code')
   return { ok: false, message: lastMessage }
 }
 
@@ -295,12 +339,16 @@ export async function verifyCode(
  * someone from reaching their account — they can enter it again from the
  * portal.
  */
-async function redeemPendingInvite(): Promise<boolean> {
+async function redeemPendingInvite(known?: {
+  id: string
+  user_metadata?: Record<string, unknown>
+}): Promise<boolean> {
   try {
     const supabase = createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    // The caller usually already has the user from the sign-in response. Only
+    // pay for a getUser() round trip when it doesn't — this runs on every
+    // sign-in, so a wasted call here is felt on every sign-in.
+    const user = known ?? (await supabase.auth.getUser()).data.user
     const pending = user?.user_metadata?.pending_invite
     if (!user || typeof pending !== 'string' || !pending) return false
 
@@ -355,7 +403,7 @@ export async function resendCode(emailRaw: string): Promise<AuthResult> {
     if (!code) throw new Error('no email_otp')
     const tpl = verifyCodeEmail({ code })
     await sendEmail({ to: email, ...tpl, tag: 'verify-code' })
-    await audit('code_sent', email, 'resend')
+    audit('code_sent', email, 'resend')
     return { ok: true, step: 'code', email, message: 'A new code is on its way.' }
   } catch (err) {
     console.error('[auth] resendCode failed:', err instanceof Error ? err.message : err)
@@ -390,7 +438,7 @@ export async function sendSignInLink(emailRaw: string, next = '/account'): Promi
       if (hashed) {
         const tpl = signInLinkEmail({ url: confirmUrl(hashed, 'magiclink', safeNext) })
         await sendEmail({ to: email, ...tpl, tag: 'signin-link' })
-        await audit('link_sent', email, 'requested')
+        audit('link_sent', email, 'requested')
       }
     }
     // Same answer whether or not the account exists.
@@ -428,7 +476,7 @@ export async function sendPasswordReset(emailRaw: string): Promise<AuthResult> {
           url: confirmUrl(hashed, 'recovery', '/account/new-password'),
         })
         await sendEmail({ to: email, ...tpl, tag: 'password-reset' })
-        await audit('reset_sent', email)
+        audit('reset_sent', email)
       }
     }
     return {
@@ -481,7 +529,7 @@ export async function setNewPassword(fd: FormData): Promise<AuthResult> {
     }
   }
 
-  await audit('verified', user.email ?? null, 'password reset')
+  audit('verified', user.email ?? null, 'password reset')
   return { ok: true, step: 'done', message: 'Password saved. You are signed in.' }
 }
 
@@ -508,18 +556,22 @@ export async function signInWithPassword(
   const guard = hit(`pw:${email}`, 10, 15 * 60 * 1000)
   const guardIp = hit(`pw-ip:${ip()}`, 30, 15 * 60 * 1000)
   if (!guard.ok || !guardIp.ok) {
-    await audit('failed', email, 'password rate limited')
+    audit('failed', email, 'password rate limited')
     return { ok: false, message: 'Too many attempts. Please wait a few minutes.' }
   }
 
   const supabase = createClient()
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (!error) {
     // Covers a social-first account that later set a password, and the 'off'
-    // mode where the invite was stashed but never redeemed.
-    const linked = await redeemPendingInvite()
-    await audit('verified', email, 'password')
+    // mode where the invite was stashed but never redeemed. The sign-in
+    // response already carries the user, so this costs nothing when there is
+    // no invite waiting — which is every sign-in after the first.
+    const linked = data.user?.user_metadata?.pending_invite
+      ? await redeemPendingInvite(data.user)
+      : false
+    audit('verified', email, 'password')
     return {
       ok: true,
       step: 'done',
@@ -538,7 +590,7 @@ export async function signInWithPassword(
     }
   }
 
-  await audit('failed', email, 'bad password')
+  audit('failed', email, 'bad password')
   // Never distinguish "no such account" from "wrong password".
   return { ok: false, message: 'That email and password combination is not right.' }
 }

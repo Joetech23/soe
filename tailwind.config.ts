@@ -11,51 +11,64 @@ const config: Config = {
   content: ['./src/**/*.{js,ts,jsx,tsx,mdx}'],
   theme: {
     extend: {
+      /**
+       * Every colour that changes between light and dark is a CSS variable
+       * holding space-separated RGB channels, so `<alpha-value>` keeps working
+       * and `bg-surface/60` still means what it says.
+       *
+       * The point of doing it this way: dark mode is a second set of variable
+       * values in globals.css, not a `dark:` class on several hundred elements.
+       * Nothing in the components had to change.
+       *
+       * Brand hues that must stay recognisable — coral, teal and gold at full
+       * strength — remain literal. Only their tints and "deep" variants flip,
+       * because those are backgrounds and text-on-tint respectively.
+       */
       colors: {
         ink: {
-          DEFAULT: '#12181F',
-          soft: '#39434F',
-          muted: '#6B7684',
+          DEFAULT: 'rgb(var(--c-ink) / <alpha-value>)',
+          soft: 'rgb(var(--c-ink-soft) / <alpha-value>)',
+          muted: 'rgb(var(--c-ink-muted) / <alpha-value>)',
         },
-        canvas: '#F5F7F6',
+        canvas: 'rgb(var(--c-canvas) / <alpha-value>)',
         surface: {
-          DEFAULT: '#FFFFFF',
-          soft: '#FBFCFC',
-          sunk: '#EFF3F1',
+          DEFAULT: 'rgb(var(--c-surface) / <alpha-value>)',
+          soft: 'rgb(var(--c-surface-soft) / <alpha-value>)',
+          sunk: 'rgb(var(--c-surface-sunk) / <alpha-value>)',
         },
         line: {
-          DEFAULT: '#E5EAE8',
-          soft: '#EEF2F0',
+          DEFAULT: 'rgb(var(--c-line) / <alpha-value>)',
+          soft: 'rgb(var(--c-line-soft) / <alpha-value>)',
         },
         coral: {
           DEFAULT: '#E8613C',
-          deep: '#C4441F',
           soft: '#F6906F',
-          tint: '#FDEDE6',
+          deep: 'rgb(var(--c-coral-deep) / <alpha-value>)',
+          tint: 'rgb(var(--c-coral-tint) / <alpha-value>)',
         },
         teal: {
           DEFAULT: '#1E7A70',
-          deep: '#12554E',
           soft: '#4FA79C',
-          tint: '#E3F1EF',
+          deep: 'rgb(var(--c-teal-deep) / <alpha-value>)',
+          tint: 'rgb(var(--c-teal-tint) / <alpha-value>)',
         },
         gold: {
           DEFAULT: '#E3A733',
-          deep: '#B07C15',
-          tint: '#FBF1D9',
+          deep: 'rgb(var(--c-gold-deep) / <alpha-value>)',
+          tint: 'rgb(var(--c-gold-tint) / <alpha-value>)',
         },
         tile: {
-          rose: '#FDEBE5',
-          sky: '#E6F1FC',
-          amber: '#FCF2DE',
-          violet: '#F0EBFA',
-          mint: '#E3F4EB',
-          peach: '#FCEEE4',
+          rose: 'rgb(var(--c-tile-rose) / <alpha-value>)',
+          sky: 'rgb(var(--c-tile-sky) / <alpha-value>)',
+          amber: 'rgb(var(--c-tile-amber) / <alpha-value>)',
+          violet: 'rgb(var(--c-tile-violet) / <alpha-value>)',
+          mint: 'rgb(var(--c-tile-mint) / <alpha-value>)',
+          peach: 'rgb(var(--c-tile-peach) / <alpha-value>)',
         },
-        success: '#15855C',
-        'success-tint': '#E3F4EB',
-        warn: '#C97A08',
-        'warn-tint': '#FBF1DC',
+        success: 'rgb(var(--c-success) / <alpha-value>)',
+        'success-tint': 'rgb(var(--c-success-tint) / <alpha-value>)',
+        warn: 'rgb(var(--c-warn) / <alpha-value>)',
+        'warn-tint': 'rgb(var(--c-warn-tint) / <alpha-value>)',
       },
       fontFamily: {
         display: ['var(--font-display)', 'Georgia', 'serif'],

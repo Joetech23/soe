@@ -1,17 +1,16 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Loader2, KeyRound } from 'lucide-react'
 import { setNewPassword } from '@/app/account/auth-actions'
+import { navigateAfterAuth } from '@/lib/auth-navigate'
 import { AuthSplit } from '@/components/auth-split'
 
 const field =
   'w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm text-ink focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20'
 
 export function NewPasswordForm({ email }: { email: string }) {
-  const router = useRouter()
   const [pending, start] = useTransition()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -33,8 +32,7 @@ export function NewPasswordForm({ email }: { email: string }) {
               return
             }
             toast.success(res.message)
-            router.push('/account')
-            router.refresh()
+            navigateAfterAuth('/account')
           })
         }
         className="space-y-4"

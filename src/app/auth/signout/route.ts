@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { siteUrl } from '@/lib/utils'
 
@@ -14,8 +15,15 @@ async function signOut(request: Request) {
   const supabase = createClient()
   await supabase.auth.signOut()
 
+  // Drop every cached render of the tree. Without this the pages rendered
+  // while signed in stay in Next's caches, so going Back — or straight to
+  // /account — briefly serves the signed-in version before the redirect
+  // catches up, which reads as "logout didn't work".
+  revalidatePath('/', 'layout')
+
   const to = new URL(request.url).searchParams.get('next') ?? '/'
-  const res = NextResponse.redirect(siteUrl(to), { status: 303 })
+  const safeTo = to.startsWith('/') && !to.startsWith('//') ? to : '/'
+  const res = NextResponse.redirect(siteUrl(safeTo), { status: 303 })
   res.headers.set('Cache-Control', 'no-store, max-age=0')
   return res
 }

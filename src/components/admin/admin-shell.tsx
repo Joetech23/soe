@@ -1,26 +1,37 @@
 'use client'
 
 import { useState } from 'react'
-import { Menu, Search, Bell, LogOut } from 'lucide-react'
+import { Menu, LogOut } from 'lucide-react'
 import { AdminSidebar } from './admin-sidebar'
+import { AdminSearch } from './admin-search'
+import { AdminNotifications } from './admin-notifications'
+import { ThemeToggle } from './theme-toggle'
 
 /**
  * Admin chrome: fixed sidebar + sticky topbar, content scrolls between them.
  * Client component so the mobile drawer can toggle; pages passed as children.
+ *
+ * `data-theme` is set here from a cookie the server read, which scopes dark
+ * mode to the admin area — the public site stays light whatever Ms Betty
+ * prefers back here — and means the correct theme is in the first paint.
  */
 export function AdminShell({
   children,
   ownerName = 'Ms Betty',
   ownerEmail = 'soetuition@gmail.com',
+  theme = 'light',
+  notificationCount = 0,
 }: {
   children: React.ReactNode
   ownerName?: string
   ownerEmail?: string
+  theme?: 'light' | 'dark'
+  notificationCount?: number
 }) {
   const [open, setOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-canvas">
+    <div data-theme={theme} className="min-h-screen bg-canvas">
       <AdminSidebar open={open} onClose={() => setOpen(false)} />
 
       <div className="lg:pl-64">
@@ -35,24 +46,11 @@ export function AdminShell({
               <Menu className="h-5 w-5" />
             </button>
 
-            <label className="relative hidden max-w-md flex-1 sm:block">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
-              <input
-                type="search"
-                placeholder="Search orders, products, customers…"
-                className="w-full rounded-pill border border-line bg-surface py-2 pl-9 pr-4 text-sm text-ink placeholder:text-ink-muted focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
-              />
-            </label>
+            <AdminSearch />
 
             <div className="ml-auto flex items-center gap-2">
-              <button
-                type="button"
-                aria-label="Notifications"
-                className="relative grid h-10 w-10 place-items-center rounded-xl text-ink-soft hover:bg-surface-sunk"
-              >
-                <Bell className="h-5 w-5" />
-                <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-coral" />
-              </button>
+              <ThemeToggle initial={theme} />
+              <AdminNotifications initialCount={notificationCount} />
               <div className="flex items-center gap-2.5 rounded-pill border border-line bg-surface py-1 pl-1 pr-3">
                 <span className="grid h-8 w-8 place-items-center rounded-full bg-teal text-sm font-bold text-white">
                   {ownerName.charAt(0)}

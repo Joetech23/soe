@@ -2,10 +2,10 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Loader2, UserPlus, Ticket, MailCheck, ArrowLeft } from 'lucide-react'
 import { startRegistration } from '@/app/account/auth-actions'
+import { navigateAfterAuth } from '@/lib/auth-navigate'
 import { AuthSplit } from '@/components/auth-split'
 import { SocialButtons, type SocialProvider } from '@/components/auth/social-buttons'
 import { VerifyCodePanel } from '@/components/auth/verify-panel'
@@ -22,7 +22,6 @@ export function RegisterForm({
   providers: SocialProvider[]
   allowRegistration: boolean
 }) {
-  const router = useRouter()
   const [pending, start] = useTransition()
   const [step, setStep] = useState<'form' | 'code' | 'link'>('form')
   const [email, setEmail] = useState('')
@@ -63,8 +62,7 @@ export function RegisterForm({
         next={next}
         onBack={() => setStep('form')}
         onVerified={() => {
-          router.push(next)
-          router.refresh()
+          navigateAfterAuth(next)
         }}
       />
     )
@@ -109,8 +107,7 @@ export function RegisterForm({
       setEmail(typed)
       if (res.step === 'done') {
         toast.success(res.message)
-        router.push(next)
-        router.refresh()
+        navigateAfterAuth(next)
         return
       }
       toast.success(res.message)
@@ -127,11 +124,46 @@ export function RegisterForm({
 
       <form action={onSubmit} className={providers.length ? 'mt-5 space-y-4' : 'space-y-4'}>
         <label className="block text-sm">
+          <span className="mb-1.5 block font-semibold text-ink">Your name</span>
+          <input
+            type="text"
+            name="fullName"
+            required
+            minLength={2}
+            maxLength={80}
+            autoComplete="name"
+            placeholder="Sarah Okafor"
+            className={field}
+          />
+          <span className="mt-1 block text-xs text-ink-muted">
+            So Ms Betty knows who she&rsquo;s speaking to.
+          </span>
+        </label>
+
+        <label className="block text-sm">
           <span className="mb-1.5 block font-semibold text-ink">Email</span>
           <input type="email" name="email" required autoComplete="email" className={field} />
           <span className="mt-1 block text-xs text-ink-muted">
             Use the same address you bought with and your files appear
             automatically.
+          </span>
+        </label>
+
+        <label className="block text-sm">
+          <span className="mb-1.5 flex items-baseline justify-between gap-2">
+            <span className="font-semibold text-ink">Mobile number</span>
+            <span className="text-xs font-normal text-ink-muted">Optional</span>
+          </span>
+          <input
+            type="tel"
+            name="phone"
+            autoComplete="tel"
+            inputMode="tel"
+            placeholder="07123 456789"
+            className={field}
+          />
+          <span className="mt-1 block text-xs text-ink-muted">
+            Only used if Ms Betty needs to reach you quickly about a lesson.
           </span>
         </label>
 

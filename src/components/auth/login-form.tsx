@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Loader2, KeyRound, Mail, MailCheck, ArrowLeft } from 'lucide-react'
 import {
@@ -10,6 +9,7 @@ import {
   sendSignInLink,
   sendPasswordReset,
 } from '@/app/account/auth-actions'
+import { navigateAfterAuth } from '@/lib/auth-navigate'
 import { AuthSplit } from '@/components/auth-split'
 import { SocialButtons, type SocialProvider } from '@/components/auth/social-buttons'
 import { VerifyCodePanel } from '@/components/auth/verify-panel'
@@ -26,7 +26,6 @@ export function LoginForm({
   next: string
   providers: SocialProvider[]
 }) {
-  const router = useRouter()
   const [pending, start] = useTransition()
   const [mode, setMode] = useState<Mode>('password')
   const [email, setEmail] = useState('')
@@ -41,8 +40,7 @@ export function LoginForm({
         next={next}
         onBack={() => setVerifying(false)}
         onVerified={() => {
-          router.push(next)
-          router.refresh()
+          navigateAfterAuth(next)
         }}
       />
     )
@@ -87,8 +85,7 @@ export function LoginForm({
       const res = await signInWithPassword(fd)
       if (res.ok) {
         toast.success(res.message)
-        router.push(next)
-        router.refresh()
+        navigateAfterAuth(next)
         return
       }
       toast.error(res.message)
