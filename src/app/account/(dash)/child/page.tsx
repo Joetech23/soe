@@ -76,6 +76,16 @@ export default async function ChildPage() {
                       {h.description && (
                         <p className="mt-1 text-sm text-ink-soft">{h.description}</p>
                       )}
+                      {h.lessonSummary && (
+                        <div className="mt-2.5 rounded-lg border-l-[3px] border-teal bg-teal-tint/40 px-3 py-2">
+                          <div className="text-[0.65rem] font-bold uppercase tracking-wider text-teal-deep">
+                            What we covered
+                          </div>
+                          <p className="mt-0.5 text-sm text-ink-soft">
+                            {h.lessonSummary}
+                          </p>
+                        </div>
+                      )}
                       <div className="mt-2 flex flex-wrap items-center gap-3">
                         {h.dueDate && (
                           <span className="text-xs font-semibold text-coral">

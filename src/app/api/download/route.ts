@@ -77,7 +77,8 @@ export async function GET(request: Request) {
 
       if (!tok) return fail('invalid')
       if (tok.revoked_at) return fail('revoked')
-      if (new Date(tok.expires_at) < new Date()) return fail('expired')
+      // null expires_at = lifetime link; only a real date can be in the past.
+      if (tok.expires_at && new Date(tok.expires_at) < new Date()) return fail('expired')
 
       email = tok.email.toLowerCase()
       delivery = 'token'

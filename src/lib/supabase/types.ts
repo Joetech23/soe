@@ -140,7 +140,8 @@ export type DownloadTokenRow = {
   token_hash: string
   order_id: string | null
   email: string
-  expires_at: string
+  /** null = lifetime link. */
+  expires_at: string | null
   use_count: number
   last_used_at: string | null
   revoked_at: string | null
@@ -196,6 +197,42 @@ export type CustomerRow = {
   created_at: string
 }
 
+export type ReviewStatus = 'pending' | 'approved' | 'rejected'
+
+export type ReviewRow = {
+  id: string
+  author_name: string
+  author_email: string | null
+  topic: string | null
+  rating: number
+  quote: string
+  status: ReviewStatus
+  featured: boolean
+  admin_notes: string | null
+  user_id: string | null
+  ip: string | null
+  approved_at: string | null
+  approved_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type WaitlistStatus = 'waiting' | 'offered' | 'joined' | 'declined'
+
+export type WaitlistRow = {
+  id: string
+  group_id: string
+  parent_name: string
+  email: string
+  phone: string | null
+  child_name: string | null
+  year_group: string | null
+  notes: string | null
+  status: WaitlistStatus
+  created_at: string
+  updated_at: string
+}
+
 type T<Row, Ins = Partial<Row>, Upd = Partial<Row>> = {
   Row: Row
   Insert: Ins
@@ -222,6 +259,10 @@ export interface Database {
         created_at: string
       }>
 
+      // ---- reviews + waitlist (migration 0008) ----
+      reviews: T<ReviewRow>
+      waitlist_entries: T<WaitlistRow>
+
       // ---- tutoring (existing, live) ----
       user_roles: T<{
         id: string
@@ -234,6 +275,8 @@ export interface Database {
         name: string
         description: string | null
         is_one_to_one: boolean
+        /** null = no limit. */
+        capacity: number | null
         created_at: string
       }>
       children: T<{
@@ -257,6 +300,8 @@ export interface Database {
         id: string
         title: string
         description: string | null
+        /** Optional "what we covered" note for parents. */
+        lesson_summary: string | null
         file_path: string | null
         due_date: string | null
         group_id: string | null
@@ -336,6 +381,10 @@ export interface Database {
       has_role: { Args: { _user_id: string; _role: AppRole }; Returns: boolean }
       is_staff: { Args: Record<string, never>; Returns: boolean }
       redeem_invite_code: { Args: { _code: string }; Returns: string }
+      group_availability: {
+        Args: { _group_id: string }
+        Returns: { capacity: number | null; taken: number; seats_left: number | null }[]
+      }
       gen_order_reference: { Args: Record<string, never>; Returns: string }
       create_order: {
         Args: {

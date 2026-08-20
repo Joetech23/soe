@@ -101,6 +101,8 @@ export type ChildInfo = {
     id: string
     title: string
     description: string | null
+    /** Ms Betty's optional "what we covered today" note. */
+    lessonSummary: string | null
     dueDate: string | null
     filePath: string | null
   }[]
@@ -137,7 +139,7 @@ export async function getMyChildren(): Promise<ChildInfo[]> {
         : Promise.resolve({ data: null }),
       db
         .from('homework_items')
-        .select('id, title, description, due_date, file_path')
+        .select('id, title, description, lesson_summary, due_date, file_path')
         .or(`child_id.eq.${c.id}${c.group_id ? `,group_id.eq.${c.group_id}` : ''}`)
         .order('created_at', { ascending: false }),
       db
@@ -157,6 +159,7 @@ export async function getMyChildren(): Promise<ChildInfo[]> {
           id: string
           title: string
           description: string | null
+          lesson_summary: string | null
           due_date: string | null
           file_path: string | null
         }[]
@@ -164,6 +167,7 @@ export async function getMyChildren(): Promise<ChildInfo[]> {
         id: h.id,
         title: h.title,
         description: h.description,
+        lessonSummary: h.lesson_summary,
         dueDate: h.due_date,
         filePath: h.file_path,
       })),

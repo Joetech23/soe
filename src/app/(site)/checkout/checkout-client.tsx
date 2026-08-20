@@ -221,7 +221,7 @@ export function CheckoutClient() {
 
         <p className="mt-4 text-xs leading-relaxed text-ink-muted">
           Instant download after checkout, plus a copy emailed to you. Your link
-          works for 30 days, and forever if you create an account.
+          is yours for life, and lands in your library if you create an account.
         </p>
       </aside>
     </div>

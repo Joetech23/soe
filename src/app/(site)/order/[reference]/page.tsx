@@ -179,7 +179,7 @@ export default async function OrderPage({
         <div className="mt-6 rounded-card border border-line bg-surface-sunk/50 p-5 text-sm text-ink-soft">
           <p className="font-semibold text-ink">Keep these files forever</p>
           <p className="mt-1">
-            This link works for 30 days. Create an account with{' '}
+            This link is yours for life. Create an account with{' '}
             <strong>{order.customer_email}</strong> and everything you&rsquo;ve
             downloaded stays in your library permanently.
           </p>

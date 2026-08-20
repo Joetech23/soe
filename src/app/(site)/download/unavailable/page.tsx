@@ -10,7 +10,7 @@ export const metadata = {
 const REASONS: Record<string, { title: string; body: string }> = {
   expired: {
     title: 'This download link has expired',
-    body: 'Download links last 30 days. Sign in to your library to get your file again, or ask Ms Betty to send a fresh link.',
+    body: 'That link could not be used. Sign in to your library to get your file again, or ask Ms Betty to send a fresh one.',
   },
   invalid: {
     title: "We couldn't recognise that link",

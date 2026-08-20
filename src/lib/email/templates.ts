@@ -64,12 +64,12 @@ export function freeDownloadEmail(args: {
       <p style="margin:0 0 14px">${greeting}</p>
       <p style="margin:0 0 18px">Here's your copy of <strong>${escapeHtml(args.productName)}</strong>. Tap below and it will download straight away.</p>
       <p style="margin:0 0 22px">${button(args.downloadUrl, 'Download now')}</p>
-      <p style="margin:0 0 8px;font-size:13px;color:${BRAND.muted}">This link works for 30 days and can be used as often as you like. If it ever expires, just ask and I'll send a fresh one.</p>
+      <p style="margin:0 0 8px;font-size:13px;color:${BRAND.muted}">This link is yours for life &mdash; use it as often as you like, on any device. Bookmark it, or create an account with this address and every file stays in your library.</p>
       <p style="margin:22px 0 0">I hope it's useful,<br><strong>${site.owner}</strong></p>
     `,
       `Your copy of ${args.productName} is ready to download.`
     ),
-    text: `${args.name ? `Hi ${args.name},` : 'Hello,'}\n\nHere's your copy of ${args.productName}:\n${args.downloadUrl}\n\nThis link works for 30 days.\n\n${site.owner}\n${site.name}`,
+    text: `${args.name ? `Hi ${args.name},` : 'Hello,'}\n\nHere's your copy of ${args.productName}:\n${args.downloadUrl}\n\nThis link is yours for life.\n\n${site.owner}\n${site.name}`,
   }
 }
 
@@ -106,7 +106,7 @@ export function orderReceiptEmail(args: {
             <td align="right" style="padding:11px 0;font-weight:800">${formatPrice(args.totalPence)}</td></tr>
       </table>
 
-      <p style="margin:16px 0 0;font-size:13px;color:${BRAND.muted}">Your download link works for 30 days. Create an account with this email address and your files stay in your library permanently.</p>
+      <p style="margin:16px 0 0;font-size:13px;color:${BRAND.muted}">Your download link is yours for life. Create an account with this email address and every file stays in your library too.</p>
       <p style="margin:20px 0 0;font-size:12px;color:${BRAND.muted}">Digital content — supplied immediately with your consent, so the 14-day cancellation right does not apply. Keep this email as your receipt.</p>
       <p style="margin:20px 0 0">Thank you,<br><strong>${site.owner}</strong></p>
     `,
@@ -123,6 +123,7 @@ export function homeworkPostedEmail(args: {
   childName: string
   title: string
   description?: string | null
+  lessonSummary?: string | null
   dueDate?: string | null
   hasAttachment: boolean
   portalUrl: string
@@ -148,6 +149,15 @@ export function homeworkPostedEmail(args: {
         ${due ? `<p style="margin:10px 0 0;font-size:13px;font-weight:700;color:${BRAND.coral}">Due ${escapeHtml(due)}</p>` : ''}
         ${args.hasAttachment ? `<p style="margin:8px 0 0;font-size:13px;color:${BRAND.muted}">📎 There's a file to download in the portal.</p>` : ''}
       </div>
+
+      ${
+        args.lessonSummary
+          ? `<div style="border-left:3px solid ${BRAND.teal};padding:2px 0 2px 14px;margin:0 0 20px">
+               <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:${BRAND.teal}">What we covered</div>
+               <p style="margin:6px 0 0;font-size:14px;color:${BRAND.ink}">${escapeHtml(args.lessonSummary)}</p>
+             </div>`
+          : ''
+      }
 
       <p style="margin:0 0 22px">${button(args.portalUrl, 'Open the parent portal')}</p>
       <p style="margin:0;font-size:13px;color:${BRAND.muted}">Any questions, just reply to this email or send me a WhatsApp.</p>
@@ -256,12 +266,12 @@ export function reissueEmail(args: { downloadUrl: string }) {
       <p style="margin:0 0 14px">Hello,</p>
       <p style="margin:0 0 18px">Here's a new link to your files — the previous one had expired.</p>
       <p style="margin:0 0 22px">${button(args.downloadUrl, 'Download now')}</p>
-      <p style="margin:0;font-size:13px;color:${BRAND.muted}">This one works for another 30 days.</p>
+      <p style="margin:0;font-size:13px;color:${BRAND.muted}">This one is yours for life.</p>
       <p style="margin:20px 0 0"><strong>${site.owner}</strong></p>
     `,
       'A fresh download link for your files.'
     ),
-    text: `Here's a fresh download link (valid 30 days):\n${args.downloadUrl}\n\n${site.owner}`,
+    text: `Here's a fresh download link (yours for life):\n${args.downloadUrl}\n\n${site.owner}`,
   }
 }
 

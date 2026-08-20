@@ -95,6 +95,25 @@ export function HomeworkForm({
         />
       </label>
 
+      {/* Optional, and addressed to the parent rather than the child — it is
+          the answer to "what did you do today?" that a 7-year-old will not
+          give. It goes into the notification email as well as the portal. */}
+      <label className="block text-sm">
+        <span className="mb-1.5 block font-semibold text-ink">
+          Lesson summary{' '}
+          <span className="font-normal text-ink-muted">(optional, for parents)</span>
+        </span>
+        <textarea
+          name="lessonSummary"
+          rows={3}
+          placeholder="Today we revised number bonds to 20 and started column addition. Leo was much quicker with his doubles."
+          className={field}
+        />
+        <span className="mt-1 block text-xs text-ink-muted">
+          Shown to parents in the portal and included in their email.
+        </span>
+      </label>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block text-sm">
           <span className="mb-1.5 block font-semibold text-ink">

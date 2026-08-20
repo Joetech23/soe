@@ -46,6 +46,8 @@ export function ChildForm({ groups }: { groups: Group[] }) {
       id="child-form"
       className="space-y-4"
     >
+      {/* First name and group only. The year group was a second thing to keep
+          in step with the group name, which already says the year. */}
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block text-sm">
           <span className="mb-1.5 block font-semibold text-ink">
@@ -54,32 +56,18 @@ export function ChildForm({ groups }: { groups: Group[] }) {
           <input name="name" required placeholder="Leo" className={field} />
         </label>
         <label className="block text-sm">
-          <span className="mb-1.5 block font-semibold text-ink">Year group</span>
-          <select name="yearGroup" defaultValue="" className={field}>
-            <option value="">— Not set —</option>
-            {['Reception', 'Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5', 'Year 6'].map(
-              (y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              )
-            )}
+          <span className="mb-1.5 block font-semibold text-ink">Group</span>
+          <select name="groupId" defaultValue="" className={field}>
+            <option value="">— Unassigned —</option>
+            {groups.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.name}
+                {g.is_one_to_one ? ' (1:1)' : ''}
+              </option>
+            ))}
           </select>
         </label>
       </div>
-
-      <label className="block text-sm">
-        <span className="mb-1.5 block font-semibold text-ink">Group</span>
-        <select name="groupId" defaultValue="" className={field}>
-          <option value="">— Unassigned —</option>
-          {groups.map((g) => (
-            <option key={g.id} value={g.id}>
-              {g.name}
-              {g.is_one_to_one ? ' (1:1)' : ''}
-            </option>
-          ))}
-        </select>
-      </label>
 
       <button type="submit" disabled={pending} className="btn-primary">
         {pending ? (
@@ -130,6 +118,24 @@ export function GroupForm() {
           Notes <span className="font-normal text-ink-muted">(optional)</span>
         </span>
         <input name="description" placeholder="Zoom link in the calendar invite" className={field} />
+      </label>
+      <label className="block text-sm">
+        <span className="mb-1.5 block font-semibold text-ink">
+          Class size limit{' '}
+          <span className="font-normal text-ink-muted">(optional)</span>
+        </span>
+        <input
+          name="capacity"
+          type="number"
+          min={1}
+          max={100}
+          placeholder="e.g. 8"
+          className={field}
+        />
+        <span className="mt-1 block text-xs text-ink-muted">
+          Once this many children are in the group, new bookings are offered the
+          waiting list instead. Leave blank for no limit.
+        </span>
       </label>
       <label className="flex items-center gap-2.5 text-sm text-ink">
         <input

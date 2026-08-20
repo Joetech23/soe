@@ -73,6 +73,8 @@ const homeworkSchema = z
   .object({
     title: z.string().trim().min(2, 'Give the homework a title.').max(160),
     description: z.string().trim().max(2000).optional().or(z.literal('')),
+    /** Optional "what we covered today" note, shown to parents. */
+    lessonSummary: z.string().trim().max(2000).optional().or(z.literal('')),
     dueDate: z.string().trim().optional().or(z.literal('')),
     groupId: z.string().uuid().optional().or(z.literal('')),
     childId: z.string().uuid().optional().or(z.literal('')),
@@ -87,6 +89,7 @@ export async function createHomework(formData: FormData): Promise<ActionResult> 
     const parsed = homeworkSchema.safeParse({
       title: String(formData.get('title') ?? ''),
       description: String(formData.get('description') ?? ''),
+      lessonSummary: String(formData.get('lessonSummary') ?? ''),
       dueDate: String(formData.get('dueDate') ?? ''),
       groupId: String(formData.get('groupId') ?? ''),
       childId: String(formData.get('childId') ?? ''),
@@ -119,6 +122,7 @@ export async function createHomework(formData: FormData): Promise<ActionResult> 
       due_date: d.dueDate || null,
       group_id: d.groupId || null,
       child_id: d.childId || null,
+      lesson_summary: d.lessonSummary || null,
       file_path: filePath,
     })
     if (error) throw error
@@ -141,6 +145,7 @@ export async function createHomework(formData: FormData): Promise<ActionResult> 
             childName: p.childName,
             title: d.title,
             description: d.description || null,
+            lessonSummary: d.lessonSummary || null,
             dueDate: d.dueDate || null,
             hasAttachment: Boolean(filePath),
             portalUrl: siteUrl('/account/child'),

@@ -1,4 +1,4 @@
-import { Users, UserRound } from 'lucide-react'
+import { Users, UserRound, Hourglass } from 'lucide-react'
 import { createAdminClient, hasAdminCredentials } from '@/lib/supabase/admin'
 import { AdminPageHeader, Card, SectionHead } from '@/components/admin/ui'
 import { GroupForm, DeleteGroupButton } from '@/components/admin/children-forms'
@@ -11,21 +11,28 @@ type Group = {
   name: string
   description: string | null
   is_one_to_one: boolean
+  /** null = no limit. Absent entirely until migration 0008 is applied. */
+  capacity?: number | null
 }
+type Waiting = { group_id: string }
 type Child = { id: string; name: string; group_id: string | null }
 
 export default async function AdminGroups() {
   let groups: Group[] = []
   let children: Child[] = []
+  let waiting: Waiting[] = []
 
   if (hasAdminCredentials()) {
     const db = createAdminClient()
-    const [g, c] = await Promise.all([
-      db.from('groups').select('id, name, description, is_one_to_one').order('name'),
+    const [g, c, w] = await Promise.all([
+      db.from('groups').select('*').order('name'),
       db.from('children').select('id, name, group_id'),
+      // The waitlist table may not exist yet; an error here must not blank the page.
+      db.from('waitlist_entries').select('group_id').eq('status', 'waiting'),
     ])
     groups = (g.data ?? []) as Group[]
     children = (c.data ?? []) as Child[]
+    waiting = (w.data ?? []) as Waiting[]
   }
 
   const unassigned = children.filter((c) => !c.group_id)
@@ -56,6 +63,9 @@ export default async function AdminGroups() {
             <ul className="divide-y divide-line">
               {groups.map((g) => {
                 const members = children.filter((c) => c.group_id === g.id)
+                const cap = typeof g.capacity === 'number' ? g.capacity : null
+                const full = cap !== null && members.length >= cap
+                const queued = waiting.filter((w) => w.group_id === g.id).length
                 return (
                   <li key={g.id} className="flex items-start gap-3 px-5 py-4">
                     <span className="tile h-10 w-10 shrink-0 bg-teal-tint text-teal">
@@ -71,10 +81,24 @@ export default async function AdminGroups() {
                         {g.is_one_to_one && (
                           <span className="pill bg-tile-rose text-coral">1:1</span>
                         )}
-                        <span className="pill bg-surface-sunk text-ink-muted">
-                          {members.length}{' '}
-                          {members.length === 1 ? 'child' : 'children'}
+                        <span
+                          className={`pill ${
+                            full
+                              ? 'bg-tile-amber text-gold-deep'
+                              : 'bg-surface-sunk text-ink-muted'
+                          }`}
+                        >
+                          {cap === null
+                            ? `${members.length} ${members.length === 1 ? 'child' : 'children'}`
+                            : `${members.length} of ${cap}`}
                         </span>
+                        {full && <span className="pill bg-coral-tint text-coral">Full</span>}
+                        {queued > 0 && (
+                          <span className="pill bg-tile-violet text-ink-soft">
+                            <Hourglass className="mr-1 inline h-3 w-3" aria-hidden />
+                            {queued} waiting
+                          </span>
+                        )}
                       </div>
                       {g.description && (
                         <p className="mt-1 text-xs text-ink-soft">{g.description}</p>

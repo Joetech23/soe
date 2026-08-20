@@ -26,6 +26,7 @@ export const adminNav: AdminNavGroup[] = [
       { href: '/admin/children', label: 'Children', icon: 'GraduationCap' },
       { href: '/admin/homework', label: 'Homework', icon: 'FileText' },
       { href: '/admin/feedback', label: 'Feedback', icon: 'MessageSquare' },
+      { href: '/admin/reviews', label: 'Reviews', icon: 'MessageSquareQuote' },
     ],
   },
   {

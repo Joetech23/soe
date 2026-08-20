@@ -45,6 +45,10 @@ const groupSchema = z.object({
   name: z.string().trim().min(2, 'Give the group a name.').max(80),
   description: z.string().trim().max(300).optional().or(z.literal('')),
   isOneToOne: z.coerce.boolean(),
+  // '' means "no limit"; a number caps the class.
+  capacity: z
+    .union([z.coerce.number().int().min(1).max(100), z.literal('')])
+    .optional(),
 })
 
 export async function createGroup(formData: FormData): Promise<ActionResult> {
@@ -54,6 +58,7 @@ export async function createGroup(formData: FormData): Promise<ActionResult> {
       name: String(formData.get('name') ?? ''),
       description: String(formData.get('description') ?? ''),
       isOneToOne: formData.get('isOneToOne') === 'on',
+      capacity: String(formData.get('capacity') ?? '') || '',
     })
     if (!parsed.success) {
       return { ok: false, message: parsed.error.issues[0]?.message ?? 'Check the form.' }
@@ -63,6 +68,8 @@ export async function createGroup(formData: FormData): Promise<ActionResult> {
       name: d.name,
       description: d.description || null,
       is_one_to_one: d.isOneToOne,
+      // Blank means no limit, which is not the same as a limit of zero.
+      capacity: typeof d.capacity === 'number' ? d.capacity : null,
     })
     if (error) throw error
 
@@ -94,7 +101,6 @@ export async function deleteGroup(id: string): Promise<ActionResult> {
 /* --------------------------------- children -------------------------------- */
 const childSchema = z.object({
   name: z.string().trim().min(1, "Enter the child's first name.").max(80),
-  yearGroup: z.string().trim().max(40).optional().or(z.literal('')),
   groupId: z.string().uuid().optional().or(z.literal('')),
 })
 
@@ -103,7 +109,6 @@ export async function createChild(formData: FormData): Promise<ActionResult> {
     const db = await requireAdmin()
     const parsed = childSchema.safeParse({
       name: String(formData.get('name') ?? ''),
-      yearGroup: String(formData.get('yearGroup') ?? ''),
       groupId: String(formData.get('groupId') ?? ''),
     })
     if (!parsed.success) {
@@ -115,7 +120,6 @@ export async function createChild(formData: FormData): Promise<ActionResult> {
       .from('children')
       .insert({
         name: d.name,
-        year_group: d.yearGroup || null,
         group_id: d.groupId || null,
       })
       .select('id, name')

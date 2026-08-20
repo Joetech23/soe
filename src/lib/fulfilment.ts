@@ -52,12 +52,15 @@ async function notifyOwner(db: Admin, order: OrderRow) {
 type Admin = SupabaseClient<Database>
 
 /**
- * Mints a 30-day guest download token for an order and returns the raw value.
+ * Mints a guest download token for an order and returns the raw value.
  * Only the SHA-256 hash is persisted.
  */
 export async function mintOrderToken(db: Admin, order: OrderRow): Promise<string> {
   const raw = mintToken()
-  const expires = new Date(Date.now() + TOKEN_TTL_DAYS * 86_400_000).toISOString()
+  const expires =
+    TOKEN_TTL_DAYS === null
+      ? null
+      : new Date(Date.now() + TOKEN_TTL_DAYS * 86_400_000).toISOString()
   const { error } = await db.from('download_tokens').insert({
     token_hash: hashToken(raw),
     order_id: order.id,

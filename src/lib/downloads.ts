@@ -32,8 +32,15 @@ export function safeEqual(a: string, b: string): boolean {
 /** Signed-URL lifetime. Short on purpose: it goes straight into the download. */
 export const SIGNED_URL_TTL_SECONDS = 60
 
-/** Guest link lifetime. Long enough to be useful, short enough to be revocable. */
-export const TOKEN_TTL_DAYS = 30
+/**
+ * Guest link lifetime.
+ *
+ * null = never expires. A parent who bought a phonics PDF re-downloading it in
+ * three years on a new phone is a good customer, not an attacker — and every
+ * expiry did was generate "I lost my file" emails. Refunds and abuse are
+ * handled by `revoked_at`, which is the control that actually matters.
+ */
+export const TOKEN_TTL_DAYS: number | null = null
 
 /** Per-entitlement abuse cap, enforced in the record_download RPC. */
 export const DOWNLOADS_PER_HOUR = 10

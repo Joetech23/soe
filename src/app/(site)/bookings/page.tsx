@@ -4,6 +4,8 @@ import { siteUrl } from '@/lib/utils'
 import { PageHeader } from '@/components/page-header'
 import { Reveal } from '@/components/reveal'
 import { BookingForm } from './booking-form'
+import { ClassAvailability } from '@/components/class-availability'
+import { getGroupsWithSeats } from '@/lib/groups'
 
 export const metadata: Metadata = {
   title: 'Book Tuition',
@@ -37,7 +39,13 @@ const INFO = [
   },
 ]
 
-export default function BookingsPage() {
+export const revalidate = 60
+
+export default async function BookingsPage() {
+  // Places left are live, so a class that fills stops being bookable.
+  const groups = await getGroupsWithSeats()
+  const capped = groups.filter((g) => g.capacity !== null && !g.isOneToOne)
+
   return (
     <div className="mx-auto max-w-shell px-4 section md:px-8">
       <PageHeader
@@ -46,9 +54,23 @@ export default function BookingsPage() {
         lede="Send a quick booking request and Ms Betty will follow up within 48 hours with availability and a secure payment link. If sessions are full for your slot, pop onto the waiting list and I'll email the moment a space opens."
       />
 
+      {capped.length > 0 && (
+        <Reveal className="mt-10">
+          <h2 className="font-display text-2xl font-bold text-ink">
+            Places in this term&rsquo;s classes
+          </h2>
+          <p className="mb-5 mt-1 text-sm text-ink-soft">
+            Updated as children join. Full classes have a waiting list.
+          </p>
+          <ClassAvailability groups={groups} />
+        </Reveal>
+      )}
+
       <div className="mt-12 grid gap-8 lg:grid-cols-[1.4fr_1fr]">
         <Reveal>
-          <BookingForm />
+          <div id="booking-form">
+            <BookingForm />
+          </div>
         </Reveal>
 
         <aside className="space-y-5">

@@ -8,11 +8,11 @@ import {
   SUBJECTS,
   WHY_US,
   STEPS,
-  TESTIMONIALS,
   FAQS,
   YEAR_GROUPS,
 } from '@/lib/site'
 import { getFreeProducts, styleFor } from '@/lib/shop'
+import { getApprovedTestimonials } from '@/lib/reviews'
 import { siteUrl, formatPrice } from '@/lib/utils'
 import { WordOfTheDay } from '@/components/word-of-the-day'
 import { Icon } from '@/components/icon'
@@ -42,6 +42,8 @@ const stepTiles = [
 export const revalidate = 300
 
 export default async function HomePage() {
+  // Approved parent reviews, merged with Ms Betty's existing ones.
+  const TESTIMONIALS = await getApprovedTestimonials()
   const featured = await getFreeProducts(3)
 
   return (
@@ -109,7 +111,7 @@ export default async function HomePage() {
 
             <Reveal delay={320}>
               {/* Real review count rather than stock avatars — the number is
-                  verifiable on the Kind Words page, faces would not be. */}
+                  verifiable on the Testimonials page, faces would not be. */}
               <div className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-2">
                 <div className="flex items-center gap-2">
                   <div className="flex gap-0.5" aria-label="5 out of 5 stars">
@@ -196,6 +198,15 @@ export default async function HomePage() {
             </div>
           </Reveal>
         </div>
+      </section>
+
+      {/* ───────────────────────── WORD OF THE DAY ─────────────────────────
+          Straight after the hero: it is the one thing on the page a child can
+          do rather than read about, so it earns the first scroll. */}
+      <section className="shell pb-4 pt-10">
+        <Reveal>
+          <WordOfTheDay />
+        </Reveal>
       </section>
 
       {/* ───────────────────── YEAR-GROUP MARQUEE ───────────────────── */}
@@ -476,17 +487,17 @@ export default async function HomePage() {
           <Reveal dir="right" delay={120}>
             <div className="grid grid-cols-2 gap-4">
               <Image
-                src="/images/pupils-reading.jpg"
-                alt="A teacher reading a story to a small group of primary-aged children"
-                width={900}
-                height={1100}
-                className="col-span-2 aspect-[4/3] w-full rounded-xl2 object-cover shadow-lift"
+                src="/images/online-lesson.jpg"
+                alt="A primary-aged child in an online lesson, their tutor talking on the screen"
+                width={1100}
+                height={1650}
+                className="col-span-2 aspect-[4/3] w-full rounded-xl2 object-cover object-top shadow-lift"
               />
               <Image
-                src="/images/pupils-group.jpg"
-                alt="Young children taking part in a group music and phonics activity"
-                width={700}
-                height={700}
+                src="/images/learning-at-home.jpg"
+                alt="A child working at a computer at home with a parent helping"
+                width={1100}
+                height={686}
                 className="aspect-square w-full rounded-card object-cover shadow-card"
               />
               <div className="grid place-items-center rounded-card bg-teal p-5 text-center text-white shadow-card">
@@ -502,13 +513,6 @@ export default async function HomePage() {
             </div>
           </Reveal>
         </div>
-      </section>
-
-      {/* ───────────────────────── WORD OF THE DAY ───────────────────────── */}
-      <section className="shell pb-8 pt-8">
-        <Reveal>
-          <WordOfTheDay />
-        </Reveal>
       </section>
 
       {/* ───────────────────────── RESOURCES ───────────────────────── */}

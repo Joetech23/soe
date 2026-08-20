@@ -9,9 +9,11 @@ import {
   GraduationCap,
   FileText,
   MessageSquare,
+  MessageSquareQuote,
   UserRound,
   Mail,
   Inbox,
+  Settings,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -26,9 +28,11 @@ const MAP: Record<string, LucideIcon> = {
   GraduationCap,
   FileText,
   MessageSquare,
+  MessageSquareQuote,
   UserRound,
   Mail,
   Inbox,
+  Settings,
 }
 
 export function AdminIcon({ name, className }: { name: string; className?: string }) {

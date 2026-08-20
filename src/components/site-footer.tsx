@@ -8,7 +8,7 @@ const exploreLinks = [
   { href: '/services', label: 'Tuition & year groups' },
   { href: '/how-it-works', label: 'How it works' },
   { href: '/resources', label: 'Resources hub' },
-  { href: '/testimonials', label: 'Kind words' },
+  { href: '/testimonials', label: 'Testimonials' },
   { href: '/faq', label: 'FAQ' },
   { href: '/bookings', label: 'Book a session' },
   { href: '/newsletter', label: 'Newsletter' },

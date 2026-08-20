@@ -48,7 +48,7 @@ export const primaryNav: NavItem[] = [
     children: [
       { href: '/about', label: 'About Ms Betty', desc: 'Meet your tutor', icon: 'Heart' },
       { href: '/how-it-works', label: 'How it works', desc: 'Four simple steps', icon: 'MessageCircle' },
-      { href: '/testimonials', label: 'Kind words', desc: 'What families say', icon: 'Quote' },
+      { href: '/testimonials', label: 'Testimonials', desc: 'What families say', icon: 'Quote' },
       { href: '/faq', label: 'FAQ', desc: 'Common questions', icon: 'HelpCircle' },
     ],
   },
@@ -63,7 +63,7 @@ export const mobileNav = [
   { href: '/services', label: 'Tuition' },
   { href: '/how-it-works', label: 'How it works' },
   { href: '/resources', label: 'Resources' },
-  { href: '/testimonials', label: 'Kind words' },
+  { href: '/testimonials', label: 'Testimonials' },
   { href: '/faq', label: 'FAQ' },
   { href: '/newsletter', label: 'Newsletter' },
 ] as const
@@ -373,46 +373,46 @@ export type Testimonial = {
 
 export const TESTIMONIALS: Testimonial[] = [
   {
-    topic: 'Easter phonics session',
+    topic: 'Reception',
     quote:
       'Firstly, thank you for the Easter phonics lesson. I’m really pleased with how it went. Since the lesson, she has been eager to show me what she has learned, demonstrating a good understanding of the sounds and how to apply them. It’s been especially encouraging to see her take initiative on her own — I’ve even caught her doing independent work based on the lesson without being prompted. This shows that the learning has really stuck and that she’s developing both confidence and enthusiasm for phonics. I’m very happy with her progress and look forward to seeing her continue to build on these skills.',
     author: 'Reception parent',
     feature: true,
   },
   {
-    topic: 'Year 3/4 maths booster',
+    topic: 'Year 3',
     quote:
       "I'm so grateful to have crossed paths with Miss Betty. I have watched my child grow in confidence with her maths and show enthusiasm for class. Miss Betty is encouraging, calm and really breaks things down in a way that my child will understand, even if it takes her a while. Miss Betty's patience and passion really shines through. Thank you.",
     author: 'Parent of a Year 3 student',
     feature: true,
   },
   {
-    topic: 'Holiday learning',
+    topic: 'Year 2',
     quote:
       'What can I say about Ms Betty. My son really enjoys his sessions. I was unsure about enrolling him in the summer programme, however, he did not complain and looked forward to his sessions. His reading and comprehension has come a long way and he is so proud of himself going into year two full of confidence in his abilities. Thank you Ms Betty for your patient, engaging, and encouraging attitude towards learning. We appreciate you.',
     author: 'Parent of a Year 2 student',
     feature: true,
   },
   {
-    topic: 'Year 4 learning',
+    topic: 'Year 4',
     quote:
       'Miss Betty has tailored her lessons to include Michael Jackson, who my daughter is obsessed with at the moment. She literally counts down the days to see Miss Betty. It’s just a joy to see my daughter find a love for learning.',
     author: 'Parent of a Year 4 student',
   },
   {
-    topic: '11+ prep',
+    topic: '11+',
     quote:
       'Miss Betty kept my very shy daughter engaged from the very start. She enjoyed the lessons and managed to gain more confidence in her English comprehension than she would have at school.',
     author: 'Parent of a Year 4 student',
   },
   {
-    topic: 'Year 6 sessions',
+    topic: 'Year 6',
     quote:
       'My daughter has come a long way. She loves her sessions and I’ve seen such an eager energy to learn more. I’m so happy with the sessions.',
     author: 'Parent of a Year 6 student',
   },
   {
-    topic: 'Reception phonics',
+    topic: 'Reception',
     quote:
       'Betty speaks softly and she’s very easy to understand. My son always looks forward to the next lesson.',
     author: 'Parent of a Reception student',
