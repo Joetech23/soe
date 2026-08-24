@@ -57,18 +57,37 @@ type Admin = SupabaseClient<Database>
  */
 export async function mintOrderToken(db: Admin, order: OrderRow): Promise<string> {
   const raw = mintToken()
+  const row = {
+    token_hash: hashToken(raw),
+    order_id: order.id,
+    email: order.customer_email,
+  }
+
   const expires =
     TOKEN_TTL_DAYS === null
       ? null
       : new Date(Date.now() + TOKEN_TTL_DAYS * 86_400_000).toISOString()
-  const { error } = await db.from('download_tokens').insert({
-    token_hash: hashToken(raw),
-    order_id: order.id,
-    email: order.customer_email,
-    expires_at: expires,
-  })
-  if (error) throw error
-  return raw
+
+  const { error } = await db.from('download_tokens').insert({ ...row, expires_at: expires })
+  if (!error) return raw
+
+  // `expires_at` is only nullable once migration 0008 has been applied. Until
+  // then a NULL is rejected and nobody could download anything — so fall back
+  // to a date so far out that it is lifetime in every sense that matters.
+  // This keeps deliveries working whether or not the migration has been run.
+  if (expires === null && /null value|not-null/i.test(error.message)) {
+    const farFuture = new Date(Date.now() + 100 * 365 * 86_400_000).toISOString()
+    const retry = await db
+      .from('download_tokens')
+      .insert({ ...row, expires_at: farFuture })
+    if (retry.error) throw retry.error
+    console.warn(
+      '[fulfilment] download_tokens.expires_at is still NOT NULL — apply migration 0008 for true lifetime links.'
+    )
+    return raw
+  }
+
+  throw error
 }
 
 /** Where a customer lands to collect their files. */

@@ -40,7 +40,13 @@ export async function POST(request: Request) {
     return badRequest(parsed.error.issues[0]?.message ?? 'Please check the form.')
   }
   const d = parsed.data
-  if (d.company) return NextResponse.json({ ok: true })
+  // Honeypot. Answer as though it worked so a bot learns nothing — but log
+  // it, because a trap that fires on a real person is otherwise invisible:
+  // they see "sent" and never receive anything.
+  if (d.hpRef) {
+    console.warn(`[free-download] honeypot tripped — no action taken`)
+    return NextResponse.json({ ok: true })
+  }
 
   if (!hasAdminCredentials()) {
     return NextResponse.json(

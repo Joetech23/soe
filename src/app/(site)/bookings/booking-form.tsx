@@ -65,7 +65,7 @@ export function BookingForm() {
       intent,
       notes: String(form.get('notes') ?? ''),
       agreeTerms: form.get('agreeTerms') === 'on',
-      company: String(form.get('company') ?? ''),
+      hpRef: String(form.get('hp_ref') ?? ''),
     }
 
     const parsed = bookingRequestSchema.safeParse(data)
@@ -107,9 +107,12 @@ export function BookingForm() {
       {/* honeypot */}
       <input
         type="text"
-        name="company"
+        name="hp_ref"
         tabIndex={-1}
         autoComplete="off"
+        data-1p-ignore
+        data-lpignore="true"
+        data-form-type="other"
         aria-hidden
         className="absolute left-[-9999px] h-0 w-0 opacity-0"
       />

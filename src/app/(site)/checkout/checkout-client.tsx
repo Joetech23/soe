@@ -29,7 +29,7 @@ export function CheckoutClient() {
           digitalConsent: form.get('digitalConsent') === 'on',
           marketingConsent: form.get('marketingConsent') === 'on',
           billingCountry: String(form.get('billingCountry') ?? 'GB'),
-          company: String(form.get('company') ?? ''),
+          hpRef: String(form.get('hp_ref') ?? ''),
         }),
       })
       const body = await res.json().catch(() => ({}))
@@ -78,9 +78,12 @@ export function CheckoutClient() {
       <form onSubmit={onSubmit} className="card space-y-6 p-6 md:p-8">
         <input
           type="text"
-          name="company"
+          name="hp_ref"
           tabIndex={-1}
           autoComplete="off"
+          data-1p-ignore
+          data-lpignore="true"
+          data-form-type="other"
           aria-hidden
           className="absolute left-[-9999px] h-0 w-0 opacity-0"
         />

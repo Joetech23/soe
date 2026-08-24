@@ -37,7 +37,13 @@ export async function POST(request: Request) {
   const d = parsed.data
 
   // 4. Honeypot — accept silently so bots learn nothing.
-  if (d.company) return NextResponse.json({ ok: true })
+  // Honeypot. Answer as though it worked so a bot learns nothing — but log
+  // it, because a trap that fires on a real person is otherwise invisible:
+  // they see "sent" and never receive anything.
+  if (d.hpRef) {
+    console.warn(`[bookings] honeypot tripped — no action taken`)
+    return NextResponse.json({ ok: true })
+  }
 
   if (!hasAdminCredentials()) {
     console.error('[bookings] Supabase not configured — request dropped')

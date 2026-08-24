@@ -17,7 +17,7 @@ export function NewsletterForm() {
       name: String(form.get('name') ?? ''),
       email: String(form.get('email') ?? ''),
       childYear: String(form.get('childYear') ?? ''),
-      company: String(form.get('company') ?? ''),
+      hpRef: String(form.get('hp_ref') ?? ''),
     })
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? 'Please check the form.')
@@ -51,9 +51,12 @@ export function NewsletterForm() {
     <form onSubmit={onSubmit} className="card p-6 md:p-8">
       <input
         type="text"
-        name="company"
+        name="hp_ref"
         tabIndex={-1}
         autoComplete="off"
+        data-1p-ignore
+        data-lpignore="true"
+        data-form-type="other"
         aria-hidden
         className="absolute left-[-9999px] h-0 w-0 opacity-0"
       />

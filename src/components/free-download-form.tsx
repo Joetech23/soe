@@ -31,7 +31,7 @@ export function FreeDownloadForm({
       name: String(form.get('name') ?? ''),
       productSlug,
       marketingConsent: form.get('marketingConsent') === 'on',
-      company: String(form.get('company') ?? ''),
+      hpRef: String(form.get('hp_ref') ?? ''),
     })
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? 'Please check the form.')
@@ -73,9 +73,12 @@ export function FreeDownloadForm({
     <form onSubmit={onSubmit} className="card animate-scale-in space-y-4 p-5">
       <input
         type="text"
-        name="company"
+        name="hp_ref"
         tabIndex={-1}
         autoComplete="off"
+        data-1p-ignore
+        data-lpignore="true"
+        data-form-type="other"
         aria-hidden
         className="absolute left-[-9999px] h-0 w-0 opacity-0"
       />
