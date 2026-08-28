@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Star, Quote, ArrowRight } from 'lucide-react'
 import { site, type Testimonial } from '@/lib/site'
 import { getApprovedTestimonials, REVIEW_TOPICS } from '@/lib/reviews'
+import { breadcrumbSchema } from '@/lib/seo'
 import { ReviewForm } from '@/components/reviews/review-form'
 import { siteUrl } from '@/lib/utils'
 import { PageHeader } from '@/components/page-header'
@@ -20,7 +21,6 @@ export const metadata: Metadata = {
 }
 
 const buildJsonLd = (TESTIMONIALS: Testimonial[]) => ({
-  '@context': 'https://schema.org',
   '@type': 'LocalBusiness',
   '@id': siteUrl('/#business'),
   name: site.name,
@@ -73,7 +73,13 @@ export const revalidate = 300
 
 export default async function TestimonialsPage() {
   const TESTIMONIALS = await getApprovedTestimonials()
-  const jsonLd = buildJsonLd(TESTIMONIALS)
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      buildJsonLd(TESTIMONIALS),
+      breadcrumbSchema([{ name: 'Testimonials', path: '/testimonials' }]),
+    ],
+  }
 
   return (
     <div className="shell section">

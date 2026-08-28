@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { ChevronDown, ArrowRight } from 'lucide-react'
 import { FAQS, site, whatsappHref, mailHref } from '@/lib/site'
 import { siteUrl } from '@/lib/utils'
+import { graph, breadcrumbSchema } from '@/lib/seo'
 import { PageHeader } from '@/components/page-header'
 import { Reveal } from '@/components/reveal'
 import { Icon } from '@/components/icon'
@@ -29,8 +30,14 @@ const jsonLd = {
 }
 
 export default function FaqPage() {
+  const crumbs = graph(breadcrumbSchema([{ name: 'FAQ', path: '/faq' }]))
+
   return (
     <div className="mx-auto max-w-3xl px-4 section md:px-6">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(crumbs) }}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

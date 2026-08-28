@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Clock, CreditCard, Hourglass } from 'lucide-react'
 import { siteUrl } from '@/lib/utils'
+import { graph, breadcrumbSchema } from '@/lib/seo'
 import { PageHeader } from '@/components/page-header'
 import { Reveal } from '@/components/reveal'
 import { BookingForm } from './booking-form'
@@ -42,12 +43,18 @@ const INFO = [
 export const revalidate = 60
 
 export default async function BookingsPage() {
+  const crumbs = graph(breadcrumbSchema([{ name: 'Book a session', path: '/bookings' }]))
+
   // Places left are live, so a class that fills stops being bookable.
   const groups = await getGroupsWithSeats()
   const capped = groups.filter((g) => g.capacity !== null && !g.isOneToOne)
 
   return (
     <div className="mx-auto max-w-shell px-4 section md:px-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(crumbs) }}
+      />
       <PageHeader
         eyebrow="Book or join the waiting list"
         title="Let's book your child in."

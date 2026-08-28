@@ -13,6 +13,7 @@ import {
 } from '@/lib/site'
 import { getFreeProducts, styleFor } from '@/lib/shop'
 import { getApprovedTestimonials } from '@/lib/reviews'
+import { graph, businessSchema, websiteSchema, personSchema } from '@/lib/seo'
 import { siteUrl, formatPrice } from '@/lib/utils'
 import { WordOfTheDay } from '@/components/word-of-the-day'
 import { Icon } from '@/components/icon'
@@ -44,10 +45,18 @@ export const revalidate = 300
 export default async function HomePage() {
   // Approved parent reviews, merged with Ms Betty's existing ones.
   const TESTIMONIALS = await getApprovedTestimonials()
+
+  // One connected graph: the business, the site and Ms Betty herself. The
+  // homepage is the page Google trusts these facts from.
+  const jsonLd = graph(businessSchema(), websiteSchema(), personSchema())
   const featured = await getFreeProducts(3)
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* ─────────────────────────── HERO ─────────────────────────── */}
       <section className="relative overflow-hidden">
         <div className="bg-mesh pointer-events-none absolute inset-0" aria-hidden />

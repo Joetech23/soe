@@ -4,6 +4,7 @@ import { ArrowRight } from 'lucide-react'
 import { getProducts, getCategories, styleFor } from '@/lib/shop'
 import type { ProductRow } from '@/lib/supabase/types'
 import { siteUrl, formatPrice } from '@/lib/utils'
+import { graph, breadcrumbSchema } from '@/lib/seo'
 import { PageHeader } from '@/components/page-header'
 import { Reveal } from '@/components/motion'
 import { Icon } from '@/components/icon'
@@ -64,8 +65,7 @@ function ProductCard({
 export default async function ResourcesPage() {
   const [products, categories] = await Promise.all([getProducts(), getCategories()])
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
+  const jsonLd = graph(breadcrumbSchema([{ name: 'Resources', path: '/resources' }]), {
     '@type': 'ItemList',
     itemListElement: products.map((p, i) => ({
       '@type': 'ListItem',
@@ -83,7 +83,7 @@ export default async function ResourcesPage() {
         },
       },
     })),
-  }
+  })
 
   return (
     <div className="shell section">

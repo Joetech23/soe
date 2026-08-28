@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { Heart, GraduationCap, Smile, ArrowRight } from 'lucide-react'
 import { site } from '@/lib/site'
 import { siteUrl } from '@/lib/utils'
+import { graph, breadcrumbSchema } from '@/lib/seo'
 import { PageHeader } from '@/components/page-header'
 import { Reveal } from '@/components/reveal'
 
@@ -40,8 +41,14 @@ const CARDS = [
 ]
 
 export default function AboutPage() {
+  const crumbs = graph(breadcrumbSchema([{ name: 'About Ms Betty', path: '/about' }]))
+
   return (
     <div className="mx-auto max-w-shell px-4 section md:px-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(crumbs) }}
+      />
       <div className="grid items-center gap-12 md:grid-cols-[1fr_0.82fr]">
         <PageHeader
           eyebrow="Meet your tutor"

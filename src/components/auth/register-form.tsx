@@ -40,7 +40,7 @@ export function RegisterForm({
             and need access to the parent portal, please get in touch and she
             will set you up.
           </p>
-          <Link href="/contact" className="btn-primary mt-6 w-full">
+          <Link href="/bookings" className="btn-primary mt-6 w-full">
             Contact Ms Betty
           </Link>
         </div>

@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { STEPS } from '@/lib/site'
 import { siteUrl } from '@/lib/utils'
+import { graph, breadcrumbSchema } from '@/lib/seo'
 import { PageHeader } from '@/components/page-header'
 import { Reveal } from '@/components/reveal'
 import { Icon } from '@/components/icon'
@@ -26,8 +27,14 @@ const tiles = [
 ]
 
 export default function HowItWorksPage() {
+  const crumbs = graph(breadcrumbSchema([{ name: 'How it works', path: '/how-it-works' }]))
+
   return (
     <div className="mx-auto max-w-shell px-4 section md:px-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(crumbs) }}
+      />
       <PageHeader
         eyebrow="How it works"
         title="Simple, from the very first hello."

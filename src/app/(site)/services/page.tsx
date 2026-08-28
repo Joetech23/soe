@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { ArrowRight } from 'lucide-react'
 import { YEAR_GROUPS, ENRICHMENT, PRICING } from '@/lib/site'
 import { siteUrl } from '@/lib/utils'
+import { graph, coursesSchema, breadcrumbSchema } from '@/lib/seo'
 import { PageHeader } from '@/components/page-header'
 import { Reveal } from '@/components/reveal'
 import { Icon } from '@/components/icon'
@@ -29,8 +30,17 @@ const tile: Record<string, string> = {
 }
 
 export default function ServicesPage() {
+  const jsonLd = graph(
+    coursesSchema(),
+    breadcrumbSchema([{ name: 'Tuition', path: '/services' }])
+  )
+
   return (
     <div className="mx-auto max-w-shell px-4 section md:px-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="grid items-center gap-10 md:grid-cols-[1fr_0.72fr]">
         <PageHeader
           eyebrow="What we learn at Spirit of Excellence"
