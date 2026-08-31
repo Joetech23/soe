@@ -256,6 +256,115 @@ export function ownerSaleEmail(args: {
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Booking enquiries                                                         */
+/*                                                                            */
+/*  These two were the last hand-rolled HTML fragments in the app — no doctype,*/
+/*  no head, no branding. A bare fragment is a weak spam signal on its own,    */
+/*  and the owner copy is delivered to the same domain it claims to come from, */
+/*  where filters are least forgiving. Both now go through the same shell as   */
+/*  every other email.                                                        */
+/* -------------------------------------------------------------------------- */
+
+export function enquiryOwnerEmail(args: {
+  reference: string
+  intent: 'book' | 'waitlist'
+  parentName: string
+  parentEmail: string
+  phone?: string | null
+  childName: string
+  yearGroup: string
+  subject: string
+  notes?: string | null
+  enquiryUrl: string
+}) {
+  const kind = args.intent === 'waitlist' ? 'Waiting-list request' : 'Booking request'
+  const row = (label: string, value: string) =>
+    `<tr><td style="padding:5px 16px 5px 0;color:${BRAND.muted};white-space:nowrap">${label}</td>
+         <td style="padding:5px 0">${escapeHtml(value)}</td></tr>`
+
+  return {
+    subject: `${kind}: ${args.childName} (${args.yearGroup}) — ${args.reference}`,
+    html: shell(
+      `
+      <p style="margin:0 0 4px;font-size:19px;font-weight:800;color:${BRAND.ink}">${kind}</p>
+      <p style="margin:0 0 18px;font-size:13px;color:${BRAND.muted}">Reference ${escapeHtml(args.reference)}</p>
+
+      <table role="presentation" style="font-size:14px;margin:0 0 18px">
+        ${row('Parent', args.parentName)}
+        ${row('Email', args.parentEmail)}
+        ${row('Phone', args.phone || '—')}
+        ${row('Child', args.childName)}
+        ${row('Year group', args.yearGroup)}
+        ${row('Class', args.subject)}
+      </table>
+
+      ${
+        args.notes
+          ? `<p style="margin:0 0 6px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:${BRAND.teal}">What they wrote</p>
+             <div style="margin:0 0 20px;padding:14px 16px;background:${BRAND.canvas};border:1px solid ${BRAND.line};border-radius:12px;font-size:14px;line-height:1.7;white-space:pre-line">${escapeHtml(args.notes)}</div>`
+          : ''
+      }
+
+      <p style="margin:0 0 18px">${button(args.enquiryUrl, 'Open this enquiry')}</p>
+      <p style="margin:0;font-size:13px;color:${BRAND.muted}">Reply to this email and it goes straight to ${escapeHtml(args.parentName)}.</p>
+    `,
+      `${kind} from ${args.parentName} — ${args.childName}, ${args.yearGroup}`
+    ),
+    text: `${kind} ${args.reference}
+Parent: ${args.parentName}
+Email: ${args.parentEmail}
+Phone: ${args.phone || '—'}
+Child: ${args.childName} (${args.yearGroup})
+Class: ${args.subject}
+Notes: ${args.notes || '—'}
+
+Open it: ${args.enquiryUrl}`,
+  }
+}
+
+export function enquiryParentEmail(args: {
+  reference: string
+  intent: 'book' | 'waitlist'
+  parentName: string
+  childName: string
+  replyTime: string
+  whatsapp: string
+}) {
+  const waiting = args.intent === 'waitlist'
+  return {
+    subject: `We've got your ${waiting ? 'waiting list request' : 'booking request'} — ${args.reference}`,
+    html: shell(
+      `
+      <p style="margin:0 0 14px;font-size:19px;font-weight:800;color:${BRAND.ink}">Thank you, ${escapeHtml(args.parentName)}</p>
+      <p style="margin:0 0 18px">${
+        waiting
+          ? `${escapeHtml(args.childName)} is on the waiting list. I will email the moment a space opens up.`
+          : `I have your booking request for ${escapeHtml(args.childName)} and will be in touch within ${escapeHtml(args.replyTime)} with availability and next steps.`
+      }</p>
+      <p style="margin:0 0 18px">Your reference is <strong>${escapeHtml(args.reference)}</strong>.</p>
+      <p style="margin:0 0 18px;font-size:14px;color:${BRAND.muted}">If anything changes, just reply to this email or WhatsApp ${escapeHtml(args.whatsapp)}.</p>
+      <p style="margin:20px 0 0">— <strong>${site.owner}</strong><br>${site.name}</p>
+    `,
+      waiting
+        ? `${args.childName} is on the waiting list — reference ${args.reference}.`
+        : `Your booking request is with ${site.owner} — reference ${args.reference}.`
+    ),
+    text: `Thank you, ${args.parentName}.
+
+${
+  waiting
+    ? `${args.childName} is on the waiting list. I will email the moment a space opens up.`
+    : `I have your booking request for ${args.childName} and will be in touch within ${args.replyTime}.`
+}
+
+Your reference is ${args.reference}.
+
+${site.owner}
+${site.name}`,
+  }
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Download link re-issue                                                    */
 /* -------------------------------------------------------------------------- */
 export function reissueEmail(args: { downloadUrl: string }) {
