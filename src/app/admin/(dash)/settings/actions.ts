@@ -118,6 +118,33 @@ export async function toggleSocialProvider(
   }
 }
 
+/**
+ * Bank details and payment terms for invoices.
+ *
+ * Saved once and snapshotted onto each invoice as it is raised, so changing
+ * them here never rewrites what a parent was already sent.
+ */
+export async function saveInvoiceDetails(fd: FormData): Promise<ActionResult> {
+  const instructions = String(fd.get('instructions') ?? '').trim().slice(0, 1200)
+  const days = Number(String(fd.get('dueDays') ?? '7'))
+
+  if (!Number.isFinite(days) || days < 0 || days > 365) {
+    return { ok: false, message: 'Give a number of days between 0 and 365.' }
+  }
+
+  const first = await save('invoiceInstructions', instructions)
+  if (!first.ok) return first
+  const second = await save('invoiceDueDays', Math.round(days))
+  if (!second.ok) return second
+
+  return {
+    ok: true,
+    message: instructions
+      ? 'Saved — new bank-transfer invoices will show these details.'
+      : 'Saved. Without bank details, transfer invoices cannot say how to pay.',
+  }
+}
+
 export async function saveAnnouncement(fd: FormData): Promise<ActionResult> {
   const text = String(fd.get('text') ?? '').trim().slice(0, 200)
   const enabled = fd.get('enabled') === 'on'

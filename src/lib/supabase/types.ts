@@ -233,6 +233,62 @@ export type WaitlistRow = {
   updated_at: string
 }
 
+export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'void'
+/** 'custom' is bank transfer / cash / anything Ms Betty arranges herself. */
+export type InvoiceMethod = 'custom' | 'stripe' | 'paypal'
+
+export type InvoiceRow = {
+  id: string
+  reference: string
+  enquiry_id: string | null
+  customer_name: string
+  customer_email: string
+  customer_phone: string | null
+  child_name: string | null
+  currency: string
+  subtotal_pence: number
+  discount_pence: number
+  total_pence: number
+  status: InvoiceStatus
+  payment_method: InvoiceMethod
+  payment_instructions: string | null
+  payment_reference: string | null
+  provider_session_id: string | null
+  due_on: string | null
+  notes: string | null
+  admin_notes: string | null
+  token_hash: string | null
+  sent_at: string | null
+  paid_at: string | null
+  viewed_at: string | null
+  voided_at: string | null
+  marked_paid_by: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type InvoiceItemRow = {
+  id: string
+  invoice_id: string
+  description: string
+  quantity: number
+  unit_pence: number
+  /** Generated column — never write to it. */
+  amount_pence: number
+  sort_order: number
+  created_at: string
+}
+
+export type InvoiceEventRow = {
+  id: string
+  invoice_id: string
+  kind: string
+  detail: string | null
+  actor_id: string | null
+  created_at: string
+}
+
 type T<Row, Ins = Partial<Row>, Upd = Partial<Row>> = {
   Row: Row
   Insert: Ins
@@ -262,6 +318,16 @@ export interface Database {
       // ---- reviews + waitlist (migration 0008) ----
       reviews: T<ReviewRow>
       waitlist_entries: T<WaitlistRow>
+
+      // ---- invoices (migration 0009) ----
+      invoices: T<InvoiceRow>
+      // amount_pence is generated, so it is never part of an insert or update.
+      invoice_items: T<
+        InvoiceItemRow,
+        Partial<Omit<InvoiceItemRow, 'amount_pence'>>,
+        Partial<Omit<InvoiceItemRow, 'amount_pence'>>
+      >
+      invoice_events: T<InvoiceEventRow>
 
       // ---- tutoring (existing, live) ----
       user_roles: T<{
@@ -423,6 +489,15 @@ export interface Database {
         Returns: string
       }
       expire_stale_orders: { Args: Record<string, never>; Returns: number }
+      mark_invoice_paid: {
+        Args: {
+          _invoice_id: string
+          _method?: string | null
+          _reference?: string | null
+          _actor?: string | null
+        }
+        Returns: { newly_paid: boolean; invoice_reference: string }[]
+      }
     }
     Enums: {
       app_role: AppRole

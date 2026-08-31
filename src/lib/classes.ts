@@ -156,3 +156,55 @@ export const CLASS_OPTIONS = [
   '11+ preparation',
   'Not sure yet — please advise',
 ]
+
+/** Price in pence for a one-to-one session, per the booking form's own copy. */
+export const ONE_TO_ONE_PRICE_PENCE = 4500
+
+export type SuggestedLine = {
+  description: string
+  unitPence: number
+  /** What one unit buys — drives the default quantity wording on an invoice. */
+  unit: 'week' | 'session'
+}
+
+/**
+ * Turn the class a parent picked on the booking form back into a priced line.
+ *
+ * The form stores the option label verbatim (`subject` on `booking_requests`),
+ * so an exact match against CLASS_OPTIONS is the reliable route. The loose
+ * fallback catches labels stored before an option was reworded, which is worth
+ * having: a wrong price on screen is obvious, a missing one is just friction.
+ *
+ * Returns null when the choice genuinely has no price — "11+ preparation" and
+ * "Not sure yet" are conversations, not products, and Ms Betty types the figure
+ * herself.
+ */
+export function suggestionForSubject(subject: string | null | undefined): SuggestedLine | null {
+  if (!subject) return null
+  const s = subject.trim()
+
+  const slot =
+    CLASS_SLOTS.find(
+      (c) =>
+        s === `${c.day} ${c.start} — ${c.title} (£${(c.pricePence / 100).toFixed(2)}/week)` ||
+        s === `${c.day} ${c.start} — ${c.title} (£8.50/session, home ed)`
+    ) ?? CLASS_SLOTS.find((c) => s.includes(c.title))
+
+  if (slot) {
+    return {
+      description: `${slot.title} — ${slot.day} ${slot.start}`,
+      unitPence: slot.pricePence,
+      unit: slot.track === 'weekly' ? 'week' : 'session',
+    }
+  }
+
+  if (/one-to-one/i.test(s)) {
+    return {
+      description: 'One-to-one tuition',
+      unitPence: ONE_TO_ONE_PRICE_PENCE,
+      unit: 'session',
+    }
+  }
+
+  return null
+}

@@ -14,6 +14,7 @@ export const adminNav: AdminNavGroup[] = [
     group: 'Shop',
     items: [
       { href: '/admin/orders', label: 'Orders', icon: 'ShoppingBag' },
+      { href: '/admin/invoices', label: 'Invoices', icon: 'ReceiptText' },
       { href: '/admin/products', label: 'Products', icon: 'Package' },
       { href: '/admin/categories', label: 'Categories', icon: 'FolderTree' },
       { href: '/admin/downloads', label: 'Downloads', icon: 'Download' },

@@ -9,12 +9,14 @@ import {
   XCircle,
 } from 'lucide-react'
 import { getSettings, getEnabledProviders } from '@/lib/settings'
+import { availableMethods } from '@/lib/payments/config'
 import { emailConfigured } from '@/lib/email/send'
 import { AdminPageHeader, Card, SectionHead } from '@/components/admin/ui'
 import {
   VerificationPicker,
   SocialToggles,
   AnnouncementForm,
+  InvoiceDetailsForm,
   RegistrationSwitch,
   HomeworkSwitch,
   FeedbackSwitch,
@@ -28,6 +30,7 @@ export const metadata = { title: 'Settings', robots: { index: false } }
 export default async function AdminSettings() {
   const [settings, providers] = await Promise.all([getSettings(), getEnabledProviders()])
   const mailReady = emailConfigured()
+  const payMethods = availableMethods()
 
   return (
     <div className="space-y-6">
@@ -75,6 +78,15 @@ export default async function AdminSettings() {
               <FeedbackSwitch checked={settings.notifyFeedback} />
               <OwnerSaleSwitch checked={settings.notifyOwnerSale} />
             </div>
+          </Card>
+
+          <Card>
+            <SectionHead title="Invoices" />
+            <InvoiceDetailsForm
+              instructions={settings.invoiceInstructions}
+              dueDays={settings.invoiceDueDays}
+              methods={payMethods}
+            />
           </Card>
 
           <Card>
@@ -156,6 +168,9 @@ export default async function AdminSettings() {
               label: 'Facebook sign-in configured in Supabase',
               on: providers.includes('facebook'),
             },
+            { label: 'Card payments (Stripe)', on: payMethods.includes('stripe') },
+            { label: 'PayPal payments', on: payMethods.includes('paypal') },
+            { label: 'Bank details saved for invoices', on: Boolean(settings.invoiceInstructions) },
             { label: 'Announcement bar showing', on: settings.announcementEnabled },
             { label: 'New sign-ups open', on: settings.allowRegistration },
           ].map((r) => (

@@ -380,3 +380,174 @@ export function passwordResetEmail(args: { url: string }) {
     text: `Choose a new password\n\n${args.url}\n\nThe link works once and expires in an hour. Didn't ask for this? Ignore this email.\n\n${site.owner}`,
   }
 }
+
+/* -------------------------------------------------------------------------- */
+/*  Invoices                                                                  */
+/* -------------------------------------------------------------------------- */
+
+type InvoiceLine = {
+  description: string
+  quantity: number
+  unitPence: number
+  amountPence: number
+}
+
+function invoiceTable(
+  lines: InvoiceLine[],
+  subtotal: number,
+  discount: number,
+  total: number
+) {
+  const rows = lines
+    .map(
+      (l) =>
+        `<tr><td style="padding:9px 0;border-bottom:1px solid ${BRAND.line}">${escapeHtml(l.description)}${
+          l.quantity > 1
+            ? `<br><span style="font-size:12px;color:${BRAND.muted}">${l.quantity} &times; ${formatPrice(l.unitPence)}</span>`
+            : ''
+        }</td>
+         <td align="right" style="padding:9px 0;border-bottom:1px solid ${BRAND.line};white-space:nowrap">${formatPrice(l.amountPence)}</td></tr>`
+    )
+    .join('')
+
+  const subtotalRow = discount
+    ? `<tr><td style="padding:8px 0;color:${BRAND.muted}">Subtotal</td>
+           <td align="right" style="padding:8px 0;color:${BRAND.muted};white-space:nowrap">${formatPrice(subtotal)}</td></tr>`
+    : ''
+  const discountRow = discount
+    ? `<tr><td style="padding:8px 0;color:${BRAND.teal}">Discount</td>
+           <td align="right" style="padding:8px 0;color:${BRAND.teal};white-space:nowrap">&minus;${formatPrice(discount)}</td></tr>`
+    : ''
+
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;margin:0 0 6px">
+    ${rows}${subtotalRow}${discountRow}
+    <tr><td style="padding:11px 0;font-weight:800">Total</td>
+        <td align="right" style="padding:11px 0;font-weight:800">${formatPrice(total)}</td></tr>
+  </table>`
+}
+
+/**
+ * The invoice itself.
+ *
+ * Every figure is in the body as well as behind the link. A parent should be
+ * able to see what they are being asked for without clicking anything — the
+ * button is for paying, not for reading.
+ */
+export function invoiceEmail(args: {
+  parentName: string
+  reference: string
+  childName?: string | null
+  lines: InvoiceLine[]
+  subtotalPence: number
+  discountPence: number
+  totalPence: number
+  payUrl: string
+  method: 'custom' | 'stripe' | 'paypal'
+  instructions?: string | null
+  notes?: string | null
+  dueOn?: string | null
+}) {
+  const due = args.dueOn
+    ? new Date(args.dueOn).toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+    : null
+
+  const payBlock =
+    args.method === 'custom'
+      ? `<p style="margin:0 0 12px">You can pay by bank transfer using the details below, quoting <strong>${escapeHtml(args.reference)}</strong> as the reference.</p>
+         ${
+           args.instructions
+             ? `<div style="margin:0 0 20px;padding:14px 16px;background:${BRAND.canvas};border:1px solid ${BRAND.line};border-radius:12px;font-size:14px;line-height:1.7;white-space:pre-line">${escapeHtml(args.instructions)}</div>`
+             : ''
+         }
+         <p style="margin:0 0 22px">${button(args.payUrl, 'View this invoice')}</p>`
+      : `<p style="margin:0 0 14px">${button(args.payUrl, 'Pay this invoice')}</p>
+         <p style="margin:0 0 18px;font-size:13px;color:${BRAND.muted}">The button opens a secure ${
+           args.method === 'stripe' ? 'card' : 'PayPal'
+         } payment page. Nothing is taken until you confirm it there.</p>`
+
+  return {
+    subject: `Invoice ${args.reference} from ${site.name}`,
+    html: shell(
+      `
+      <p style="margin:0 0 14px">Hi ${escapeHtml(args.parentName)},</p>
+      <p style="margin:0 0 18px">Thank you for booking${
+        args.childName ? ` ${escapeHtml(args.childName)}` : ''
+      } in. Here is your invoice.</p>
+
+      <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:${BRAND.teal};margin:0 0 4px">Invoice ${escapeHtml(args.reference)}</div>
+      ${due ? `<div style="font-size:13px;color:${BRAND.muted};margin:0 0 10px">Due by ${escapeHtml(due)}</div>` : ''}
+      ${invoiceTable(args.lines, args.subtotalPence, args.discountPence, args.totalPence)}
+
+      <div style="margin:22px 0 0">${payBlock}</div>
+
+      ${
+        args.notes
+          ? `<p style="margin:0 0 18px;font-size:14px;line-height:1.7;white-space:pre-line">${escapeHtml(args.notes)}</p>`
+          : ''
+      }
+
+      <p style="margin:18px 0 0;font-size:13px;color:${BRAND.muted}">Any questions at all, just reply to this email.</p>
+      <p style="margin:18px 0 0">Thank you,<br><strong>${site.owner}</strong></p>
+    `,
+      `Invoice ${args.reference} — ${formatPrice(args.totalPence)}`
+    ),
+    text: `Hi ${args.parentName},\n\nInvoice ${args.reference}\n${args.lines
+      .map((l) => `${l.description} — ${formatPrice(l.amountPence)}`)
+      .join('\n')}\nTotal: ${formatPrice(args.totalPence)}\n${due ? `Due by ${due}\n` : ''}\nView or pay: ${
+      args.payUrl
+    }\n${args.instructions ? `\n${args.instructions}\n` : ''}\n${site.owner}\n${site.name}`,
+  }
+}
+
+/** Receipt once an invoice is settled, whichever way it was paid. */
+export function invoicePaidEmail(args: {
+  parentName: string
+  reference: string
+  totalPence: number
+  payUrl: string
+}) {
+  return {
+    subject: `Payment received — invoice ${args.reference}`,
+    html: shell(
+      `
+      <p style="margin:0 0 14px">Hi ${escapeHtml(args.parentName)},</p>
+      <p style="margin:0 0 18px">That&rsquo;s gone through &mdash; thank you. Invoice <strong>${escapeHtml(args.reference)}</strong> is settled in full at <strong>${formatPrice(args.totalPence)}</strong>.</p>
+      <p style="margin:0 0 22px">${button(args.payUrl, 'View your receipt')}</p>
+      <p style="margin:0;font-size:13px;color:${BRAND.muted}">Keep this email for your records.</p>
+      <p style="margin:20px 0 0">Thank you,<br><strong>${site.owner}</strong></p>
+    `,
+      `Invoice ${args.reference} is paid in full.`
+    ),
+    text: `Hi ${args.parentName},\n\nInvoice ${args.reference} is paid in full (${formatPrice(args.totalPence)}).\nReceipt: ${args.payUrl}\n\n${site.owner}`,
+  }
+}
+
+/** Tells Ms Betty an invoice was paid without her having to check. */
+export function ownerInvoicePaidEmail(args: {
+  reference: string
+  parentName: string
+  parentEmail: string
+  totalPence: number
+  method: string
+}) {
+  return {
+    subject: `Paid: ${args.reference} — ${formatPrice(args.totalPence)}`,
+    html: shell(
+      `
+      <p style="margin:0 0 12px;font-size:17px;font-weight:800">Invoice ${escapeHtml(args.reference)} has been paid.</p>
+      <table role="presentation" style="font-size:14px">
+        <tr><td style="padding:4px 14px 4px 0;color:${BRAND.muted}">Parent</td><td>${escapeHtml(args.parentName)}</td></tr>
+        <tr><td style="padding:4px 14px 4px 0;color:${BRAND.muted}">Email</td><td>${escapeHtml(args.parentEmail)}</td></tr>
+        <tr><td style="padding:4px 14px 4px 0;color:${BRAND.muted}">Method</td><td>${escapeHtml(args.method)}</td></tr>
+        <tr><td style="padding:4px 14px 4px 0;color:${BRAND.muted}">Amount</td><td><strong>${formatPrice(args.totalPence)}</strong></td></tr>
+      </table>
+    `,
+      `${args.reference} paid — ${formatPrice(args.totalPence)}`
+    ),
+    text: `Invoice ${args.reference} paid.\n${args.parentName} <${args.parentEmail}>\n${args.method}\n${formatPrice(args.totalPence)}`,
+  }
+}

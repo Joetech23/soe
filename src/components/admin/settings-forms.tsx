@@ -11,6 +11,7 @@ import {
   setNotifyOwnerSale,
   toggleSocialProvider,
   saveAnnouncement,
+  saveInvoiceDetails,
   type ActionResult,
 } from '@/app/admin/(dash)/settings/actions'
 import type { SocialProvider, VerificationMode } from '@/lib/settings'
@@ -223,6 +224,105 @@ export function SocialToggles({
         </div>
       )}
     </div>
+  )
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Invoice payment details                                                   */
+/* -------------------------------------------------------------------------- */
+/**
+ * Typed once, printed on every bank-transfer invoice.
+ *
+ * Free text rather than separate sort-code and account-number fields: bank
+ * details vary (some parents pay from abroad, some accounts have a building
+ * society roll number), and a rigid form would only get worked around.
+ */
+export function InvoiceDetailsForm({
+  instructions,
+  dueDays,
+  methods,
+}: {
+  instructions: string
+  dueDays: number
+  /** Payment methods the server can actually use right now. */
+  methods: string[]
+}) {
+  const [pending, start] = useTransition()
+  const [value, setValue] = useState(instructions)
+  const [days, setDays] = useState(String(dueDays))
+
+  return (
+    <form
+      action={(fd) =>
+        start(async () => {
+          const res = await saveInvoiceDetails(fd)
+          res.ok ? toast.success(res.message) : toast.error(res.message)
+        })
+      }
+      className="space-y-4 p-5"
+    >
+      <label className="block text-sm">
+        <span className="mb-1.5 block font-semibold text-ink">
+          Bank details for transfers
+        </span>
+        <textarea
+          name="instructions"
+          value={value}
+          rows={4}
+          maxLength={1200}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder={'Spirit of Excellence Tuition\nSort code: 00-00-00\nAccount: 12345678'}
+          className="w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm text-ink focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
+        />
+        <span className="mt-1 block text-xs text-ink-muted">
+          Shown on the invoice exactly as you type it, alongside the invoice
+          reference for the parent to quote.
+        </span>
+      </label>
+
+      <label className="block text-sm">
+        <span className="mb-1.5 block font-semibold text-ink">Payment terms</span>
+        <span className="flex items-center gap-2">
+          <input
+            name="dueDays"
+            value={days}
+            inputMode="numeric"
+            onChange={(e) => setDays(e.target.value)}
+            className="w-20 rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm text-ink focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
+          />
+          <span className="text-sm text-ink-soft">days to pay, by default</span>
+        </span>
+      </label>
+
+      <div className="rounded-xl bg-surface-sunk px-3.5 py-3 text-xs leading-relaxed text-ink-soft">
+        <strong className="text-ink">Ways a parent can pay right now:</strong>{' '}
+        {methods
+          .map((m) =>
+            m === 'custom' ? 'bank transfer' : m === 'stripe' ? 'card' : 'PayPal'
+          )
+          .join(', ')}
+        .
+        {methods.length === 1 && (
+          <>
+            {' '}
+            Card and PayPal appear here as soon as the Stripe and PayPal keys are set
+            on the server.
+          </>
+        )}
+      </div>
+
+      <button type="submit" disabled={pending} className="btn-primary">
+        {pending ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+          </>
+        ) : (
+          <>
+            <Save className="h-4 w-4" /> Save payment details
+          </>
+        )}
+      </button>
+    </form>
   )
 }
 

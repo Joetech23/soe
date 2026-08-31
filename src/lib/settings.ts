@@ -33,6 +33,13 @@ export type AppSettings = {
   /** Site-wide announcement bar. */
   announcementEnabled: boolean
   announcementText: string
+  /**
+   * How to pay by bank transfer. Printed verbatim on every "custom" invoice,
+   * so Ms Betty types her sort code once here instead of into each email.
+   */
+  invoiceInstructions: string
+  /** Days from sending to the due date shown on a new invoice. */
+  invoiceDueDays: number
 }
 
 export const SETTING_DEFAULTS: AppSettings = {
@@ -47,6 +54,8 @@ export const SETTING_DEFAULTS: AppSettings = {
   notifyOwnerSale: true,
   announcementEnabled: false,
   announcementText: '',
+  invoiceInstructions: '',
+  invoiceDueDays: 7,
 }
 
 /** Storage key per setting. Keeping these explicit stops a rename silently
@@ -60,6 +69,8 @@ const KEYS: Record<keyof AppSettings, string> = {
   notifyOwnerSale: 'notify.owner_sale',
   announcementEnabled: 'site.announcement_enabled',
   announcementText: 'site.announcement_text',
+  invoiceInstructions: 'invoice.instructions',
+  invoiceDueDays: 'invoice.due_days',
 }
 
 const VERIFICATION_MODES: VerificationMode[] = ['code', 'link', 'off']
@@ -78,6 +89,14 @@ function coerce<K extends keyof AppSettings>(key: K, raw: unknown): AppSettings[
     return (VERIFICATION_MODES.includes(raw as VerificationMode)
       ? raw
       : fallback) as AppSettings[K]
+  }
+  if (typeof fallback === 'number') {
+    const n = typeof raw === 'number' ? Math.round(raw) : Number.NaN
+    return (Number.isFinite(n) && n >= 0 && n <= 365 ? n : fallback) as AppSettings[K]
+  }
+  if (key === 'invoiceInstructions') {
+    // Longer cap than the other strings: this is a full bank-details block.
+    return (typeof raw === 'string' ? raw.slice(0, 1200) : fallback) as AppSettings[K]
   }
   if (key === 'socialProviders') {
     if (!Array.isArray(raw)) return fallback
