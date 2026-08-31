@@ -341,3 +341,162 @@
     text-wrap: balance;
   }
 }
+
+/* ==========================================================================
+   Word of the day — the flash card
+   ==========================================================================
+   The one bold element on that page, so it carries all the weight and
+   everything around it stays plain. The shadow is a hard offset with no blur:
+   that is what makes it read as a card lying on a table rather than a div with
+   a drop shadow.
+   ========================================================================== */
+@layer components {
+  .wotd-stage {
+    perspective: 1600px;
+  }
+
+  .wotd-card {
+    position: relative;
+    width: 100%;
+    max-width: 26rem;
+    margin-inline: auto;
+    aspect-ratio: 4 / 5;
+    cursor: pointer;
+    transform-style: preserve-3d;
+    transition: transform 0.66s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .wotd-card.is-flipped {
+    transform: rotateY(180deg);
+  }
+  .wotd-card:focus-visible {
+    outline: none;
+  }
+  .wotd-card:focus-visible .wotd-face {
+    box-shadow:
+      10px 10px 0 0 theme('colors.ink.DEFAULT'),
+      0 0 0 4px theme('colors.gold.DEFAULT');
+  }
+
+  .wotd-face {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 1.75rem 1.5rem;
+    border-radius: 1.75rem;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    /* Hard offset — no blur. */
+    box-shadow: 10px 10px 0 0 theme('colors.ink.DEFAULT');
+    transition: box-shadow 0.2s ease;
+  }
+  @media (min-width: 640px) {
+    .wotd-face {
+      padding: 2rem 1.9rem;
+    }
+  }
+
+  .wotd-front {
+    background: theme('colors.coral.DEFAULT');
+    border: 3px solid theme('colors.ink.DEFAULT');
+  }
+  .wotd-back {
+    background: #fff;
+    border: 3px solid theme('colors.ink.DEFAULT');
+    transform: rotateY(180deg);
+  }
+
+  .wotd-word {
+    font-family: var(--font-display), Georgia, serif;
+    font-weight: 800;
+    line-height: 0.92;
+    letter-spacing: -0.035em;
+    color: #fff;
+    text-align: center;
+    text-wrap: balance;
+  }
+
+  .wotd-chip {
+    display: inline-block;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.22);
+    padding: 0.3rem 0.7rem;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+  .wotd-chip--dark {
+    background: theme('colors.teal.tint');
+    color: theme('colors.teal.deep');
+  }
+
+  /* The beats you clap. Alternating tints so the split reads at a glance
+     without needing a label. */
+  .wotd-syllable {
+    border-radius: 0.6rem;
+    background: rgb(255 255 255 / 0.18);
+    padding: 0.2rem 0.5rem;
+    font-family: var(--font-display), Georgia, serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #fff;
+  }
+  .wotd-syllable:nth-child(even) {
+    background: rgb(18 24 31 / 0.22);
+  }
+
+  .wotd-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    border-radius: 999px;
+    border: 2px solid theme('colors.ink.DEFAULT');
+    background: #fff;
+    padding-inline: 1rem;
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: theme('colors.ink.DEFAULT');
+    box-shadow: 3px 3px 0 0 theme('colors.ink.DEFAULT');
+    transition:
+      transform 0.12s ease,
+      box-shadow 0.12s ease;
+  }
+  .wotd-action:hover {
+    transform: translate(1px, 1px);
+    box-shadow: 2px 2px 0 0 theme('colors.ink.DEFAULT');
+  }
+  .wotd-action:active {
+    transform: translate(3px, 3px);
+    box-shadow: 0 0 0 0 theme('colors.ink.DEFAULT');
+  }
+
+  /* Without 3D, cross-fade the faces instead of spinning the card. */
+  @media (prefers-reduced-motion: reduce) {
+    .wotd-card,
+    .wotd-card.is-flipped {
+      transform: none;
+      transition: none;
+    }
+    .wotd-face {
+      backface-visibility: visible;
+      -webkit-backface-visibility: visible;
+      transition: opacity 0.2s ease;
+    }
+    .wotd-back {
+      transform: none;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .wotd-card.is-flipped .wotd-front {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .wotd-card.is-flipped .wotd-back {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+}

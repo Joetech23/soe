@@ -49,6 +49,7 @@ export const primaryNav: NavItem[] = [
       { href: '/about', label: 'About Ms Betty', desc: 'Meet your tutor', icon: 'Heart' },
       { href: '/how-it-works', label: 'How it works', desc: 'Four simple steps', icon: 'MessageCircle' },
       { href: '/testimonials', label: 'Testimonials', desc: 'What families say', icon: 'Quote' },
+      { href: '/word-of-the-day', label: 'Word of the day', desc: 'A new word every day', icon: 'Sparkles' },
       { href: '/faq', label: 'FAQ', desc: 'Common questions', icon: 'HelpCircle' },
     ],
   },

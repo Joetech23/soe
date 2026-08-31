@@ -215,6 +215,14 @@ export default async function HomePage() {
       <section className="shell pb-4 pt-10">
         <Reveal>
           <WordOfTheDay />
+          <p className="mt-3 text-center">
+            <Link
+              href="/word-of-the-day"
+              className="inline-flex items-center gap-1.5 text-sm font-bold text-teal hover:text-coral"
+            >
+              Hear it, share it, see the week <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+            </Link>
+          </p>
         </Reveal>
       </section>
 

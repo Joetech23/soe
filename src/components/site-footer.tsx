@@ -9,6 +9,7 @@ const exploreLinks = [
   { href: '/how-it-works', label: 'How it works' },
   { href: '/resources', label: 'Resources hub' },
   { href: '/testimonials', label: 'Testimonials' },
+  { href: '/word-of-the-day', label: 'Word of the day' },
   { href: '/faq', label: 'FAQ' },
   { href: '/bookings', label: 'Book a session' },
   { href: '/newsletter', label: 'Newsletter' },
