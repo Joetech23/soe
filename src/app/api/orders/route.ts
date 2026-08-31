@@ -36,7 +36,7 @@ const checkoutSchema = z.object({
 })
 
 export async function POST(request: Request) {
-  if (!sameOrigin(request)) return badRequest('Invalid request origin.', 403)
+  if (!sameOrigin(request)) return badRequest('We could not verify that request came from this page. Please refresh and try again.', 403)
   const limited = rateLimit(request, 'orders', 10, 60_000)
   if (limited) return limited
 
@@ -152,7 +152,7 @@ export async function POST(request: Request) {
 
 /** Re-send a receipt/download link for an existing paid order (admin utility). */
 export async function PATCH(request: Request) {
-  if (!sameOrigin(request)) return badRequest('Invalid request origin.', 403)
+  if (!sameOrigin(request)) return badRequest('We could not verify that request came from this page. Please refresh and try again.', 403)
   const limited = rateLimit(request, 'orders-reissue', 5, 60_000)
   if (limited) return limited
   if (!hasAdminCredentials()) return badRequest('Not configured.', 503)

@@ -28,7 +28,7 @@ const CONSENT_TEXT =
   'Ticked the newsletter box while downloading a free resource on the Spirit of Excellence Tuition site.'
 
 export async function POST(request: Request) {
-  if (!sameOrigin(request)) return badRequest('Invalid request origin.', 403)
+  if (!sameOrigin(request)) return badRequest('We could not verify that request came from this page. Please refresh and try again.', 403)
   const limited = rateLimit(request, 'free-download', 8, 60_000)
   if (limited) return limited
 

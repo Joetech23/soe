@@ -21,7 +21,7 @@ function reference() {
 
 export async function POST(request: Request) {
   // 1. Origin + rate limit before any work.
-  if (!sameOrigin(request)) return badRequest('Invalid request origin.', 403)
+  if (!sameOrigin(request)) return badRequest('We could not verify that request came from this page. Please refresh and try again.', 403)
   const limited = rateLimit(request, 'bookings', 5, 60_000)
   if (limited) return limited
 

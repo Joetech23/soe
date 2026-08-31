@@ -29,7 +29,7 @@ const CONSENT_TEXT =
   'Signed up on the Spirit of Excellence Tuition newsletter page to receive occasional learning tips, reading recommendations and free resources by email. Unsubscribe any time.'
 
 export async function POST(request: Request) {
-  if (!sameOrigin(request)) return badRequest('Invalid request origin.', 403)
+  if (!sameOrigin(request)) return badRequest('We could not verify that request came from this page. Please refresh and try again.', 403)
   const limited = rateLimit(request, 'newsletter', 5, 60_000)
   if (limited) return limited
 

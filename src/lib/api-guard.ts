@@ -90,16 +90,70 @@ export async function readJson(request: Request): Promise<unknown | null> {
  * own pages. Requests with no Origin (server-to-server, curl) are allowed
  * through — they are handled by the route's own auth/secret checks.
  */
+/**
+ * CSRF guard: did this request come from a page on this site?
+ *
+ * The comparison is Origin against the host the BROWSER actually asked for,
+ * not against a hard-coded environment variable. That is both the correct
+ * check and the robust one.
+ *
+ * Correct, because it is exactly the CSRF question: a form posted from
+ * evil.com arrives with Origin: evil.com and Host: soetuition.com, and a
+ * browser will not let a page forge its own Origin. Comparing the two catches
+ * that with no configuration at all.
+ *
+ * Robust, because the previous version compared against NEXT_PUBLIC_SITE_URL
+ * and rejected everything else — so a parent on www. when the variable said
+ * apex (or on a Vercel deployment URL, or any second domain) got "Invalid
+ * request origin" and could not book, download, subscribe or check out. A
+ * misconfigured env var should never be able to take every form on the site
+ * down.
+ *
+ * The configured host and its www/apex twin are also accepted, which covers a
+ * redirect that has not happened yet.
+ */
 export function sameOrigin(request: Request): boolean {
   const origin = request.headers.get('origin')
+  // Same-origin form posts from older browsers omit Origin entirely; there is
+  // nothing to compare and nothing to reject.
   if (!origin) return true
-  const allowed = process.env.NEXT_PUBLIC_SITE_URL
-  if (!allowed) return true
+
+  let originHost: string
   try {
-    return new URL(origin).host === new URL(allowed).host
+    originHost = new URL(origin).host
   } catch {
     return false
   }
+
+  const allowed = new Set<string>()
+
+  // The public host. Behind a proxy the real one is in x-forwarded-host.
+  const forwarded = request.headers.get('x-forwarded-host')
+  if (forwarded) {
+    for (const h of forwarded.split(',')) allowed.add(h.trim().toLowerCase())
+  }
+  const host = request.headers.get('host')
+  if (host) allowed.add(host.toLowerCase())
+
+  // Plus whatever the site is configured as, and its www/apex counterpart.
+  const configured = process.env.NEXT_PUBLIC_SITE_URL
+  if (configured) {
+    try {
+      const h = new URL(configured).host.toLowerCase()
+      allowed.add(h)
+      allowed.add(h.startsWith('www.') ? h.slice(4) : `www.${h}`)
+    } catch {
+      /* a malformed variable must not decide the outcome */
+    }
+  }
+
+  const ok = allowed.has(originHost.toLowerCase())
+  if (!ok) {
+    console.warn(
+      `[api-guard] origin ${originHost} not in [${[...allowed].join(', ')}]`
+    )
+  }
+  return ok
 }
 
 export const badRequest = (message: string, status = 400) =>

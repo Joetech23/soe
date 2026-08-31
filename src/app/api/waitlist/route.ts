@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic'
  * should not appear twice, and should not lose their place either.
  */
 export async function POST(request: Request) {
-  if (!sameOrigin(request)) return badRequest('Bad request', 403)
+  if (!sameOrigin(request)) return badRequest('We could not verify that request came from this page. Please refresh and try again.', 403)
 
   const limited = rateLimit(request, 'waitlist', 5, 60 * 60 * 1000)
   if (limited) return limited
