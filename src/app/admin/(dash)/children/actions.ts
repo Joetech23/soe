@@ -102,6 +102,8 @@ export async function deleteGroup(id: string): Promise<ActionResult> {
 const childSchema = z.object({
   name: z.string().trim().min(1, "Enter the child's first name.").max(80),
   groupId: z.string().uuid().optional().or(z.literal('')),
+  // A sibling of a child already here: pick the parent and skip codes entirely.
+  parentUserId: z.string().uuid().optional().or(z.literal('')),
 })
 
 export async function createChild(formData: FormData): Promise<ActionResult> {
@@ -110,6 +112,7 @@ export async function createChild(formData: FormData): Promise<ActionResult> {
     const parsed = childSchema.safeParse({
       name: String(formData.get('name') ?? ''),
       groupId: String(formData.get('groupId') ?? ''),
+      parentUserId: String(formData.get('parentUserId') ?? ''),
     })
     if (!parsed.success) {
       return { ok: false, message: parsed.error.issues[0]?.message ?? 'Check the form.' }
@@ -121,19 +124,24 @@ export async function createChild(formData: FormData): Promise<ActionResult> {
       .insert({
         name: d.name,
         group_id: d.groupId || null,
+        parent_user_id: d.parentUserId || null,
       })
       .select('id, name')
       .maybeSingle()
     if (error || !child) throw error ?? new Error('child not created')
 
-    // Issue the first invite code straight away — it is the only way a parent
-    // can link themselves, so a child without one is a dead end.
-    const code = inviteCode(d.name)
-    const { error: codeErr } = await db
-      .from('invite_codes')
-      .insert({ code, child_id: (child as { id: string }).id })
-    if (codeErr) throw codeErr
+    revalidatePath('/admin/children')
 
+    // A child attached to an existing parent is already reachable — they will
+    // simply appear in that parent's portal. A code would be noise.
+    if (d.parentUserId) {
+      revalidatePath('/account/child')
+      return { ok: true, message: `${d.name} added and linked to their parent.` }
+    }
+
+    // Otherwise issue a code straight away: it is the only way a new parent can
+    // link themselves, so a child without one is a dead end.
+    const code = await mintCode(db, [(child as { id: string }).id], d.name)
     revalidatePath('/admin/children')
     return { ok: true, message: `${d.name} added.`, code }
   } catch (err) {
@@ -142,21 +150,121 @@ export async function createChild(formData: FormData): Promise<ActionResult> {
   }
 }
 
+/**
+ * Mint a code covering one or more children.
+ *
+ * Every code now goes through here, single child or whole family, so there is
+ * one path to reason about. The children are recorded in the join table; the
+ * legacy `child_id` anchor is left null and only read for codes minted before
+ * migration 0010.
+ */
+async function mintCode(
+  db: Awaited<ReturnType<typeof requireAdmin>>,
+  childIds: string[],
+  stemName: string
+): Promise<string> {
+  const code = inviteCode(stemName)
+  const { data: row, error } = await db
+    .from('invite_codes')
+    .insert({ code })
+    .select('id')
+    .maybeSingle()
+  if (error || !row) throw error ?? new Error('code not created')
+
+  const { error: linkErr } = await db.from('invite_code_children').insert(
+    childIds.map((child_id) => ({ code_id: (row as { id: string }).id, child_id }))
+  )
+  if (linkErr) throw linkErr
+  return code
+}
+
 export async function issueInviteCode(
   childId: string,
   childName: string
 ): Promise<ActionResult> {
   try {
     const db = await requireAdmin()
-    const code = inviteCode(childName)
-    const { error } = await db.from('invite_codes').insert({ code, child_id: childId })
-    if (error) throw error
+    const code = await mintCode(db, [childId], childName)
     revalidatePath('/admin/children')
     return { ok: true, message: `New code for ${childName}`, code }
   } catch (err) {
     console.error('[admin/issueInviteCode]', err)
     return { ok: false, message: 'Could not create a code.' }
   }
+}
+
+/**
+ * One code for a parent with more than one child here.
+ *
+ * This is the whole point of the family model: the parent types a code once
+ * and every sibling on it lands in their portal together.
+ */
+export async function issueFamilyCode(childIds: string[]): Promise<ActionResult> {
+  try {
+    const db = await requireAdmin()
+    const ids = [...new Set(childIds.filter(Boolean))]
+    if (ids.length < 2) {
+      return { ok: false, message: 'Pick at least two children for a family code.' }
+    }
+
+    const { data, error } = await db.from('children').select('id, name').in('id', ids)
+    if (error) throw error
+    const kids = (data ?? []) as { id: string; name: string }[]
+    if (kids.length !== ids.length) {
+      return { ok: false, message: 'One of those children no longer exists.' }
+    }
+
+    // Name the code after the first child so the parent recognises it.
+    const sorted = [...kids].sort((a, b) => a.name.localeCompare(b.name))
+    const code = await mintCode(db, ids, sorted[0].name)
+
+    revalidatePath('/admin/children')
+    return {
+      ok: true,
+      message: `One code for ${listNames(sorted.map((k) => k.name))}`,
+      code,
+    }
+  } catch (err) {
+    console.error('[admin/issueFamilyCode]', err)
+    return { ok: false, message: 'Could not create a family code.' }
+  }
+}
+
+/**
+ * Attach a child to a parent who already has an account.
+ *
+ * A sibling who starts lessons later does not need the code dance at all —
+ * their parent is already here. Passing null unlinks, which is how a
+ * mis-redeemed code gets undone.
+ */
+export async function linkChildToParent(
+  childId: string,
+  parentUserId: string | null
+): Promise<ActionResult> {
+  try {
+    const db = await requireAdmin()
+    const { error } = await db
+      .from('children')
+      .update({ parent_user_id: parentUserId })
+      .eq('id', childId)
+    if (error) throw error
+
+    revalidatePath('/admin/children')
+    revalidatePath('/account/child')
+    return {
+      ok: true,
+      message: parentUserId ? 'Linked to that parent.' : 'Unlinked from their parent.',
+    }
+  } catch (err) {
+    console.error('[admin/linkChildToParent]', err)
+    return { ok: false, message: 'Could not change that link.' }
+  }
+}
+
+/** "Leo", "Leo and Amara", "Leo, Amara and Sam". */
+function listNames(names: string[]): string {
+  if (names.length <= 1) return names[0] ?? ''
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
 }
 
 export async function assignChildGroup(

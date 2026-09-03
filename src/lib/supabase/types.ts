@@ -357,9 +357,17 @@ export interface Database {
       invite_codes: T<{
         id: string
         code: string
-        child_id: string
+        /** Legacy anchor child. Null on family codes minted from 0010 onward. */
+        child_id: string | null
         used_by: string | null
         used_at: string | null
+        created_at: string
+      }>
+      /** Which children a code links — one row per child, so one code can
+          cover a whole family. */
+      invite_code_children: T<{
+        code_id: string
+        child_id: string
         created_at: string
       }>
       homework_items: T<{

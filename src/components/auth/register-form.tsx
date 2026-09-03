@@ -17,16 +17,25 @@ export function RegisterForm({
   next,
   providers,
   allowRegistration,
+  defaultInvite = '',
 }: {
   next: string
   providers: SocialProvider[]
   allowRegistration: boolean
+  /** Code from the join link — prefilled, with the field already open. */
+  defaultInvite?: string
 }) {
   const [pending, start] = useTransition()
   const [step, setStep] = useState<'form' | 'code' | 'link'>('form')
   const [email, setEmail] = useState('')
-  const [invite, setInvite] = useState('')
-  const [showInvite, setShowInvite] = useState(false)
+  const [invite, setInvite] = useState(defaultInvite)
+  const [showInvite, setShowInvite] = useState(Boolean(defaultInvite))
+
+  // Someone who already has an account should not lose the code by clicking
+  // "Sign in" — the most likely visitor on a join link for a second child.
+  const signInHref = defaultInvite
+    ? `/account/login?code=${encodeURIComponent(defaultInvite)}`
+    : '/account/login'
 
   if (!allowRegistration) {
     return (
@@ -46,7 +55,7 @@ export function RegisterForm({
         </div>
         <p className="mt-8 text-center text-sm text-ink-soft">
           Already have an account?{' '}
-          <Link href="/account/login" className="font-bold text-coral hover:underline">
+          <Link href={signInHref} className="font-bold text-coral hover:underline">
             Sign in
           </Link>
         </p>
@@ -196,7 +205,8 @@ export function RegisterForm({
               className={`${field} uppercase`}
             />
             <span className="mt-1 block text-xs text-ink-muted">
-              Links your child&rsquo;s homework and lesson feedback.
+              Links homework and lesson feedback. One code covers every child on
+              it, so a parent with brothers or sisters only enters it once.
             </span>
           </label>
         ) : (
@@ -224,7 +234,7 @@ export function RegisterForm({
 
       <p className="mt-8 text-center text-sm text-ink-soft">
         Already have an account?{' '}
-        <Link href="/account/login" className="font-bold text-coral hover:underline">
+        <Link href={signInHref} className="font-bold text-coral hover:underline">
           Sign in
         </Link>
       </p>

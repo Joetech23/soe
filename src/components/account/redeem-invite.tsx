@@ -7,42 +7,57 @@ import { Loader2, Ticket } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { redeemInviteCode } from '@/lib/supabase/rpc'
 
+/** "Leo", "Leo and Amara", "Leo, Amara and Sam". */
+function listNames(names: string[]): string {
+  if (names.length <= 1) return names[0] ?? 'Your child'
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+}
+
 /**
- * Redeem an invite code to link a child.
+ * Redeem a family invite code.
  *
- * Also picks up a code stashed at signup: if email confirmation was on, the
- * code could not be redeemed there and would otherwise have been lost.
+ * One code can carry several children, so the confirmation names them back —
+ * a parent of three needs to see all three landed, not a generic "Linked!".
+ *
+ * Three ways a code arrives here: typed by hand, prefilled from the join link
+ * (`?code=` on the page), or stashed at signup when email confirmation meant it
+ * could not be redeemed on the spot.
  */
-export function RedeemInvite() {
+export function RedeemInvite({ defaultCode = '' }: { defaultCode?: string }) {
   const router = useRouter()
-  const [code, setCode] = useState('')
+  const [code, setCode] = useState(defaultCode.toUpperCase())
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
+    if (defaultCode) return
     try {
       const pending = sessionStorage.getItem('soe.pendingInvite')
       if (pending) {
         setCode(pending)
         sessionStorage.removeItem('soe.pendingInvite')
-        toast.info('We saved your invite code — tap Link my child to finish.')
+        toast.info('We saved your invite code — tap Link my children to finish.')
       }
     } catch {
       /* private mode */
     }
-  }, [])
+  }, [defaultCode])
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     try {
       const supabase = createClient()
-      await redeemInviteCode(supabase, code.trim().toUpperCase())
-      toast.success('Linked! Your child’s portal is ready.')
+      const linked = await redeemInviteCode(supabase, code.trim().toUpperCase())
+      const names = linked.map((c) => c.name)
+      toast.success(
+        names.length > 1
+          ? `${listNames(names)} are linked to your account.`
+          : `${listNames(names)} is linked to your account.`
+      )
+      setCode('')
       router.refresh()
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : 'That code did not work.'
-      )
+      toast.error(err instanceof Error ? err.message : 'That code did not work.')
     } finally {
       setLoading(false)
     }
@@ -65,7 +80,7 @@ export function RedeemInvite() {
           </>
         ) : (
           <>
-            <Ticket className="h-4 w-4" /> Link my child
+            <Ticket className="h-4 w-4" /> Link my children
           </>
         )}
       </button>

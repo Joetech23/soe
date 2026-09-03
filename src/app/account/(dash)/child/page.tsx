@@ -4,10 +4,17 @@ import { site, whatsappHref } from '@/lib/site'
 import { RedeemInvite } from '@/components/account/redeem-invite'
 
 export const dynamic = 'force-dynamic'
-export const metadata = { title: 'My child', robots: { index: false } }
+export const metadata = { title: 'My children', robots: { index: false } }
 
-export default async function ChildPage() {
+export default async function ChildPage({
+  searchParams,
+}: {
+  // A join link opened while already signed in lands here with the code, so
+  // an existing parent adding a sibling never has to type it.
+  searchParams: { code?: string }
+}) {
   const children = await getMyChildren()
+  const code = (searchParams.code ?? '').trim().toUpperCase().slice(0, 40)
 
   if (children.length === 0) {
     return (
@@ -17,14 +24,15 @@ export default async function ChildPage() {
             <Ticket className="h-6 w-6" aria-hidden />
           </span>
           <h1 className="font-display text-xl font-bold text-ink">
-            No child linked yet
+            No children linked yet
           </h1>
           <p className="mx-auto mt-2 max-w-md text-sm text-ink-soft">
             If your child has lessons with {site.owner}, she&rsquo;ll give you an
             invite code. Enter it below to see their homework and lesson feedback.
+            One code covers all of your children.
           </p>
           <div className="mx-auto mt-6 max-w-xs">
-            <RedeemInvite />
+            <RedeemInvite defaultCode={code} />
           </div>
           <p className="mt-6 text-xs text-ink-muted">
             Don&rsquo;t have a code?{' '}
@@ -145,6 +153,26 @@ export default async function ChildPage() {
           </div>
         </div>
       ))}
+
+      {/* Adding a second child used to be impossible from here: the code box
+          only ever rendered when a parent had none linked, so a parent with
+          siblings had nowhere to put the second code. */}
+      <div className="card p-6 sm:p-8">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="font-display text-lg font-bold text-ink">
+              Another child with {site.owner}?
+            </h2>
+            <p className="mt-1 max-w-md text-sm text-ink-soft">
+              Enter their invite code and they&rsquo;ll appear here alongside{' '}
+              {children.length === 1 ? children[0].name : 'your other children'}.
+            </p>
+          </div>
+          <div className="w-full shrink-0 sm:max-w-[15rem]">
+            <RedeemInvite defaultCode={code} />
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

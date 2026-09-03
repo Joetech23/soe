@@ -12,9 +12,15 @@ export const metadata = { title: 'Sign in', robots: { index: false } }
 export default async function AccountLogin({
   searchParams,
 }: {
-  searchParams: { next?: string }
+  searchParams: { next?: string; code?: string }
 }) {
-  const raw = searchParams.next ?? '/account'
+  // A parent who already has an account and clicks a join link for a new child
+  // arrives here. Carrying the code through sign-in drops them on the portal
+  // with it prefilled, rather than losing it at the door.
+  const code = (searchParams.code ?? '').trim().toUpperCase().slice(0, 40)
+  const raw =
+    searchParams.next ??
+    (code ? `/account/child?code=${encodeURIComponent(code)}` : '/account')
   const next = raw.startsWith('/') ? raw : '/account'
   const providers = await activeSocialProviders()
 

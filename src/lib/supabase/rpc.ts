@@ -33,13 +33,31 @@ export async function hasRole(
   return data === true
 }
 
+/** A child a code linked, so the caller can name them back to the parent. */
+export type LinkedChild = { id: string; name: string }
+
+/**
+ * Redeem a family invite code.
+ *
+ * Returns every child on the code that now belongs to the caller — one for a
+ * single child, several for a family. Redeeming a code the caller has already
+ * used is a no-op that returns the same list, so a parent who taps their link
+ * twice sees their children rather than an error.
+ */
 export async function redeemInviteCode(
   client: unknown,
   code: string
-): Promise<string> {
+): Promise<LinkedChild[]> {
   const { data, error } = await rpcOf(client)('redeem_invite_code', {
     _code: code,
   })
   if (error) throw error as Error
-  return data as string
+
+  // Migration 0010 changed this function's return from a single uuid to a set
+  // of rows. Both shapes are accepted so a deploy that lands before the SQL is
+  // applied still links the child rather than throwing at the parent.
+  if (typeof data === 'string') return [{ id: data, name: 'Your child' }]
+
+  const rows = (data ?? []) as { child_id: string; child_name: string }[]
+  return rows.map((r) => ({ id: r.child_id, name: r.child_name }))
 }

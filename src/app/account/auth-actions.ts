@@ -380,15 +380,15 @@ export async function verifyCode(
   for (const type of ['signup', 'magiclink', 'email'] as const) {
     const { data, error } = await supabase.auth.verifyOtp({ email, token: code, type })
     if (!error && data.session) {
-      const linkedChild = await redeemPendingInvite(data.user ?? undefined)
+      const linkedCount = await redeemPendingInvite(data.user ?? undefined)
       audit('verified', email, 'code')
       return {
         ok: true,
         step: 'done',
-        message: linkedChild
-          ? "You're in — your child's portal is linked."
+        message: linkedCount
+          ? `You're in — ${portalPhrase(linkedCount)} is linked.`
           : "You're in. Welcome!",
-        linkedChild,
+        linkedChild: linkedCount > 0,
       }
     }
     if (error) lastMessage = /expired|invalid/i.test(error.message)
@@ -411,7 +411,7 @@ export async function verifyCode(
 async function redeemPendingInvite(known?: {
   id: string
   user_metadata?: Record<string, unknown>
-}): Promise<boolean> {
+}): Promise<number> {
   try {
     const supabase = createClient()
     // The caller usually already has the user from the sign-in response. Only
@@ -419,9 +419,10 @@ async function redeemPendingInvite(known?: {
     // sign-in, so a wasted call here is felt on every sign-in.
     const user = known ?? (await supabase.auth.getUser()).data.user
     const pending = user?.user_metadata?.pending_invite
-    if (!user || typeof pending !== 'string' || !pending) return false
+    if (!user || typeof pending !== 'string' || !pending) return 0
 
-    await redeemInviteCode(supabase, pending)
+    // One code can carry a whole family, so count what actually landed.
+    const linked = await redeemInviteCode(supabase, pending)
 
     // Clear it so a stale code is not retried on every sign-in.
     if (hasAdminCredentials()) {
@@ -429,11 +430,16 @@ async function redeemPendingInvite(known?: {
         .auth.admin.updateUserById(user.id, { user_metadata: { pending_invite: null } })
         .catch(() => {})
     }
-    return true
+    return linked.length
   } catch (err) {
     console.warn('[auth] pending invite not redeemed:', err instanceof Error ? err.message : err)
-    return false
+    return 0
   }
+}
+
+/** "your child’s portal" or "your children’s portal", by however many landed. */
+function portalPhrase(count: number): string {
+  return count > 1 ? 'your children’s portal' : 'your child’s portal'
 }
 
 /* ========================================================================== */
@@ -639,12 +645,12 @@ export async function signInWithPassword(
     // no invite waiting — which is every sign-in after the first.
     const linked = data.user?.user_metadata?.pending_invite
       ? await redeemPendingInvite(data.user)
-      : false
+      : 0
     audit('verified', email, 'password')
     return {
       ok: true,
       step: 'done',
-      message: linked ? "Signed in — your child's portal is linked." : 'Signed in.',
+      message: linked ? `Signed in — ${portalPhrase(linked)} is linked.` : 'Signed in.',
     }
   }
 
