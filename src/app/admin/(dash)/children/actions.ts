@@ -82,6 +82,43 @@ export async function createGroup(formData: FormData): Promise<ActionResult> {
   }
 }
 
+export async function updateGroup(formData: FormData): Promise<ActionResult> {
+  try {
+    const db = await requireAdmin()
+    const id = String(formData.get('id') ?? '')
+    if (!id) return { ok: false, message: 'Missing group.' }
+
+    const parsed = groupSchema.safeParse({
+      name: String(formData.get('name') ?? ''),
+      description: String(formData.get('description') ?? ''),
+      isOneToOne: formData.get('isOneToOne') === 'on',
+      capacity: String(formData.get('capacity') ?? '') || '',
+    })
+    if (!parsed.success) {
+      return { ok: false, message: parsed.error.issues[0]?.message ?? 'Check the form.' }
+    }
+    const d = parsed.data
+    const { error } = await db
+      .from('groups')
+      .update({
+        name: d.name,
+        description: d.description || null,
+        is_one_to_one: d.isOneToOne,
+        capacity: typeof d.capacity === 'number' ? d.capacity : null,
+      })
+      .eq('id', id)
+    if (error) throw error
+
+    revalidatePath('/admin/groups')
+    revalidatePath('/admin/children')
+    revalidatePath('/account/child')
+    return { ok: true, message: `"${d.name}" updated.` }
+  } catch (err) {
+    console.error('[admin/updateGroup]', err)
+    return { ok: false, message: 'Could not update that group.' }
+  }
+}
+
 export async function deleteGroup(id: string): Promise<ActionResult> {
   try {
     const db = await requireAdmin()

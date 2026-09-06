@@ -64,6 +64,9 @@ export default async function AdminDashboard() {
         <StatCard
           label="Revenue this month"
           value={formatMoney(stats.revenuePence)}
+          hint={`Shop ${formatMoney(stats.shopRevenuePence)} · Tuition ${formatMoney(
+            stats.tuitionRevenuePence
+          )}`}
           icon={Banknote}
           tile="bg-tile-mint text-success"
         />

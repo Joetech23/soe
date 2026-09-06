@@ -29,12 +29,15 @@ export function StatCard({
   label,
   value,
   trend,
+  hint,
   icon: Icon,
   tile,
 }: {
   label: string
   value: string
   trend?: number
+  /** A small breakdown under the figure, e.g. "shop £12 · tuition £45". */
+  hint?: string
   icon: LucideIcon
   tile: string
 }) {
@@ -48,6 +51,7 @@ export function StatCard({
         </span>
       </div>
       <div className="mt-3 font-display text-3xl font-semibold text-ink">{value}</div>
+      {hint && <div className="mt-1 text-xs text-ink-muted">{hint}</div>}
       {trend !== undefined && (
         <div
           className={cn(

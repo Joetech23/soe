@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
-import { Loader2, Plus, Copy, Trash2, Ticket, Check, Link2, Users } from 'lucide-react'
+import { Loader2, Plus, Copy, Trash2, Ticket, Check, Link2, Users, UserRound, Hourglass, Pencil, X } from 'lucide-react'
 import {
   createChild,
   createGroup,
@@ -12,6 +12,7 @@ import {
   issueFamilyCode,
   linkChildToParent,
   assignChildGroup,
+  updateGroup,
   type ActionResult,
 } from '@/app/admin/(dash)/children/actions'
 
@@ -462,6 +463,152 @@ export function DeleteChildButton({ id, name }: { id: string; name: string }) {
     >
       <Trash2 className="h-4 w-4" />
     </button>
+  )
+}
+
+/**
+ * A group on the Groups page — display, with rename in place.
+ *
+ * Group names carry the schedule ("Wednesday 4pm — Year 1"), which shifts every
+ * term, so a group with no way to edit its name went stale the moment a slot
+ * moved. The pencil opens an inline editor for the name and — since they change
+ * for the same reason — the notes, capacity and 1:1 flag too. The whole row is
+ * a client component so the open state can live above both the pencil and the
+ * editor panel below it.
+ */
+export type GroupRowData = {
+  id: string
+  name: string
+  description: string | null
+  isOneToOne: boolean
+  capacity: number | null
+  memberNames: string[]
+  queued: number
+}
+
+export function GroupRow({ g }: { g: GroupRowData }) {
+  const [open, setOpen] = useState(false)
+  const [pending, start] = useTransition()
+
+  const members = g.memberNames.length
+  const full = g.capacity !== null && members >= g.capacity
+
+  return (
+    <li className="px-5 py-4">
+      <div className="flex items-start gap-3">
+        <span className="tile h-10 w-10 shrink-0 bg-teal-tint text-teal">
+          {g.isOneToOne ? (
+            <UserRound className="h-5 w-5" aria-hidden />
+          ) : (
+            <Users className="h-5 w-5" aria-hidden />
+          )}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-semibold text-ink">{g.name}</span>
+            {g.isOneToOne && <span className="pill bg-tile-rose text-coral">1:1</span>}
+            <span
+              className={`pill ${
+                full ? 'bg-tile-amber text-gold-deep' : 'bg-surface-sunk text-ink-muted'
+              }`}
+            >
+              {g.capacity === null
+                ? `${members} ${members === 1 ? 'child' : 'children'}`
+                : `${members} of ${g.capacity}`}
+            </span>
+            {full && <span className="pill bg-coral-tint text-coral">Full</span>}
+            {g.queued > 0 && (
+              <span className="pill bg-tile-violet text-ink-soft">
+                <Hourglass className="mr-1 inline h-3 w-3" aria-hidden />
+                {g.queued} waiting
+              </span>
+            )}
+          </div>
+          {g.description && <p className="mt-1 text-xs text-ink-soft">{g.description}</p>}
+          {members > 0 && (
+            <p className="mt-1.5 text-xs text-ink-muted">{g.memberNames.join(' · ')}</p>
+          )}
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
+          <button
+            type="button"
+            aria-label={`Edit ${g.name}`}
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+            className="grid h-8 w-8 place-items-center rounded-lg text-ink-muted hover:bg-teal-tint hover:text-teal-deep"
+          >
+            <Pencil className="h-4 w-4" />
+          </button>
+          <DeleteGroupButton id={g.id} />
+        </div>
+      </div>
+
+      {open && (
+        <form
+          action={(fd) =>
+            start(async () => {
+              const res = await updateGroup(fd)
+              handle(res)
+              if (res.ok) setOpen(false)
+            })
+          }
+          className="ml-[52px] mt-3 space-y-3 rounded-xl border border-line bg-surface-sunk/50 p-4"
+        >
+          <input type="hidden" name="id" value={g.id} />
+          <label className="block text-sm">
+            <span className="mb-1.5 block font-semibold text-ink">Group name</span>
+            {/* eslint-disable-next-line jsx-a11y/no-autofocus */}
+            <input name="name" required defaultValue={g.name} className={field} autoFocus />
+          </label>
+          <label className="block text-sm">
+            <span className="mb-1.5 block font-semibold text-ink">
+              Notes <span className="font-normal text-ink-muted">(optional)</span>
+            </span>
+            <input name="description" defaultValue={g.description ?? ''} className={field} />
+          </label>
+          <div className="flex flex-wrap items-end gap-4">
+            <label className="block text-sm">
+              <span className="mb-1.5 block font-semibold text-ink">Class size limit</span>
+              <input
+                name="capacity"
+                type="number"
+                min={1}
+                max={100}
+                defaultValue={g.capacity ?? ''}
+                placeholder="No limit"
+                className={`${field} w-32`}
+              />
+            </label>
+            <label className="flex items-center gap-2.5 pb-2.5 text-sm text-ink">
+              <input
+                type="checkbox"
+                name="isOneToOne"
+                defaultChecked={g.isOneToOne}
+                className="h-4 w-4 rounded border-line text-coral focus:ring-coral/40"
+              />
+              One-to-one slot
+            </label>
+          </div>
+          <div className="flex items-center gap-2">
+            <button type="submit" disabled={pending} className="btn-primary px-4 py-2">
+              {pending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Check className="h-4 w-4" />
+              )}
+              Save changes
+            </button>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="inline-flex items-center gap-1.5 rounded-pill px-3 py-2 text-sm font-semibold text-ink-muted hover:bg-surface-sunk hover:text-ink"
+            >
+              <X className="h-4 w-4" /> Cancel
+            </button>
+          </div>
+        </form>
+      )}
+    </li>
   )
 }
 

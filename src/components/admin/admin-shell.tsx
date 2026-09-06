@@ -6,6 +6,7 @@ import { AdminSidebar } from './admin-sidebar'
 import { AdminSearch } from './admin-search'
 import { AdminNotifications } from './admin-notifications'
 import { ThemeToggle, type Theme } from './theme-toggle'
+import { WhatsNew } from './whats-new'
 
 /**
  * Admin chrome: fixed sidebar + sticky topbar, content scrolls between them.
@@ -79,6 +80,7 @@ export function AdminShell({
         </header>
 
         <main className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-8">{children}</main>
+        <WhatsNew />
       </div>
     </div>
   )

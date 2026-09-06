@@ -11,27 +11,57 @@ import type { OrderRow, ProductRow, CustomerRow } from '@/lib/supabase/types'
  */
 
 export type DashStats = {
+  /** Shop + tuition combined, this month. */
   revenuePence: number
+  /** Paid shop orders, this month. */
+  shopRevenuePence: number
+  /** Paid tuition invoices, this month. */
+  tuitionRevenuePence: number
   orders: number
   downloads: number
   subscribers: number
   enquiries: number
 }
 
+const ZERO_STATS: DashStats = {
+  revenuePence: 0,
+  shopRevenuePence: 0,
+  tuitionRevenuePence: 0,
+  orders: 0,
+  downloads: 0,
+  subscribers: 0,
+  enquiries: 0,
+}
+
+/** Sum a `total_pence` column off a Supabase result, tolerating a failed query. */
+function sumPence(res: { data: unknown }): number {
+  return ((res.data ?? []) as { total_pence: number | null }[]).reduce(
+    (sum, r) => sum + (r.total_pence ?? 0),
+    0
+  )
+}
+
 export async function getStats(): Promise<DashStats> {
-  if (!hasAdminCredentials()) {
-    return { revenuePence: 0, orders: 0, downloads: 0, subscribers: 0, enquiries: 0 }
-  }
+  if (!hasAdminCredentials()) return ZERO_STATS
   const db = createAdminClient()
   const monthStart = new Date()
   monthStart.setDate(1)
   monthStart.setHours(0, 0, 0, 0)
 
-  const [paid, orders, downloads, subs, enquiries] = await Promise.all([
+  const [paid, invoices, orders, downloads, subs, enquiries] = await Promise.all([
     db
       .from('orders')
       .select('total_pence')
       .eq('payment_status', 'paid')
+      .gte('paid_at', monthStart.toISOString()),
+    // Paid tuition. Invoices are a separate ledger from the shop's orders, so
+    // revenue that ignored them read as £0 for a tuition-first business. The
+    // table arrived in migration 0009 — a query error (not yet applied) must
+    // fall back to zero rather than blank the whole dashboard.
+    db
+      .from('invoices')
+      .select('total_pence')
+      .eq('status', 'paid')
       .gte('paid_at', monthStart.toISOString()),
     db.from('orders').select('id', { count: 'exact', head: true }),
     db.from('download_events').select('id', { count: 'exact', head: true }),
@@ -45,11 +75,13 @@ export async function getStats(): Promise<DashStats> {
       .eq('status', 'new'),
   ])
 
+  const shopRevenuePence = sumPence(paid)
+  const tuitionRevenuePence = invoices.error ? 0 : sumPence(invoices)
+
   return {
-    revenuePence: (paid.data ?? []).reduce(
-      (sum, o) => sum + ((o as { total_pence: number }).total_pence ?? 0),
-      0
-    ),
+    revenuePence: shopRevenuePence + tuitionRevenuePence,
+    shopRevenuePence,
+    tuitionRevenuePence,
     orders: orders.count ?? 0,
     downloads: downloads.count ?? 0,
     subscribers: subs.count ?? 0,

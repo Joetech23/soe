@@ -37,8 +37,10 @@ export default async function AdminReports() {
     monthStart.setDate(1)
     monthStart.setHours(0, 0, 0, 0)
 
-    const [orders, items, dl, sb, enq, kids, hw] = await Promise.all([
+    const [orders, invoices, items, dl, sb, enq, kids, hw] = await Promise.all([
       db.from('orders').select('total_pence, payment_status, paid_at, created_at'),
+      // Paid tuition invoices (migration 0009). Tolerate the table being absent.
+      db.from('invoices').select('total_pence, status, paid_at'),
       db.from('order_items').select('product_name'),
       db.from('download_events').select('id', { count: 'exact', head: true }),
       db
@@ -59,12 +61,27 @@ export default async function AdminReports() {
     orderCount = rows.length
     const paid = rows.filter((o) => o.payment_status === 'paid')
     paidCount = paid.length
-    revenueAll = paid.reduce((s, o) => s + o.total_pence, 0)
-    revenueMonth = paid
-      .filter((o) => o.paid_at && new Date(o.paid_at) >= monthStart)
-      .reduce((s, o) => s + o.total_pence, 0)
 
-    // Last six months of paid orders
+    // Paid tuition invoices sit in their own ledger; fold them into revenue so
+    // a tuition-first business doesn't see £0. A missing table (0009 not yet
+    // applied) yields an empty list, not an error page.
+    const paidInvoices = invoices.error
+      ? []
+      : ((invoices.data ?? []) as { total_pence: number; status: string; paid_at: string | null }[])
+          .filter((i) => i.status === 'paid')
+
+    revenueAll =
+      paid.reduce((s, o) => s + o.total_pence, 0) +
+      paidInvoices.reduce((s, i) => s + i.total_pence, 0)
+    revenueMonth =
+      paid
+        .filter((o) => o.paid_at && new Date(o.paid_at) >= monthStart)
+        .reduce((s, o) => s + o.total_pence, 0) +
+      paidInvoices
+        .filter((i) => i.paid_at && new Date(i.paid_at) >= monthStart)
+        .reduce((s, i) => s + i.total_pence, 0)
+
+    // Last six months of income — shop and tuition together.
     const buckets = new Map<string, { orders: number; pence: number }>()
     for (let i = 5; i >= 0; i--) {
       const d = new Date()
@@ -75,16 +92,22 @@ export default async function AdminReports() {
         { orders: 0, pence: 0 }
       )
     }
+    const bucketKey = (iso: string) =>
+      new Date(iso).toLocaleDateString('en-GB', { month: 'short', year: '2-digit' })
     for (const o of paid) {
       if (!o.paid_at) continue
-      const key = new Date(o.paid_at).toLocaleDateString('en-GB', {
-        month: 'short',
-        year: '2-digit',
-      })
-      const b = buckets.get(key)
+      const b = buckets.get(bucketKey(o.paid_at))
       if (b) {
         b.orders += 1
         b.pence += o.total_pence
+      }
+    }
+    for (const inv of paidInvoices) {
+      if (!inv.paid_at) continue
+      const b = buckets.get(bucketKey(inv.paid_at))
+      if (b) {
+        b.orders += 1
+        b.pence += inv.total_pence
       }
     }
     months = [...buckets.entries()].map(([month, v]) => ({ month, ...v }))
@@ -146,11 +169,11 @@ export default async function AdminReports() {
       </div>
 
       <Card>
-        <SectionHead title="Paid orders, last six months" />
+        <SectionHead title="Income, last six months" />
         {months.every((m) => m.pence === 0) ? (
           <p className="px-5 py-12 text-center text-sm text-ink-muted">
-            No paid orders yet. This chart fills in once the shop takes its first
-            payment.
+            No income yet. This chart fills in once the first shop order or
+            tuition invoice is paid.
           </p>
         ) : (
           <div className="p-5">
@@ -161,7 +184,7 @@ export default async function AdminReports() {
                     <div
                       className="w-full rounded-t-lg bg-teal transition-all"
                       style={{ height: `${Math.max(3, (m.pence / peak) * 100)}%` }}
-                      title={`${m.month}: ${formatMoney(m.pence)} from ${m.orders} order(s)`}
+                      title={`${m.month}: ${formatMoney(m.pence)} from ${m.orders} payment(s)`}
                     />
                   </div>
                   <div className="text-center">
