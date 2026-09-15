@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useRef, useTransition } from 'react'
 import { toast } from 'sonner'
 import { Loader2, Upload, Trash2, Send } from 'lucide-react'
 import {
@@ -33,10 +33,18 @@ export function HomeworkForm({
   children: Child[]
 }) {
   const [pending, start] = useTransition()
+  // Reset from a ref, not the submit event: the action prop hands us FormData,
+  // not the form element, so without this the fields — the file input included
+  // — keep the last child's homework after a successful post. Picking the next
+  // child then shows stale text and, worse, re-stages the previous attachment.
+  const formRef = useRef<HTMLFormElement>(null)
 
   return (
     <form
-      action={(fd) => start(async () => handle(await createHomework(fd)))}
+      ref={formRef}
+      action={(fd) =>
+        start(async () => handle(await createHomework(fd), formRef.current ?? undefined))
+      }
       className="space-y-4"
     >
       <div className="grid gap-4 sm:grid-cols-2">
@@ -174,9 +182,13 @@ export function DeleteHomeworkButton({ id }: { id: string }) {
 
 export function FeedbackForm({ children }: { children: Child[] }) {
   const [pending, start] = useTransition()
+  const formRef = useRef<HTMLFormElement>(null)
   return (
     <form
-      action={(fd) => start(async () => handle(await createFeedback(fd)))}
+      ref={formRef}
+      action={(fd) =>
+        start(async () => handle(await createFeedback(fd), formRef.current ?? undefined))
+      }
       className="space-y-4"
     >
       <div className="grid gap-4 sm:grid-cols-2">
