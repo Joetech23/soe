@@ -1,14 +1,18 @@
 'use client'
 
-import { useRef, useTransition } from 'react'
+import { useRef, useState, useTransition } from 'react'
 import { toast } from 'sonner'
 import { Loader2, Upload, Trash2, Send } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 import {
   createHomework,
+  createHomeworkUploadUrl,
   deleteHomework,
   createFeedback,
   type ActionResult,
 } from '@/app/admin/(dash)/homework/actions'
+
+const MAX_ATTACHMENT = 50 * 1024 * 1024
 
 type Group = { id: string; name: string }
 type Child = { id: string; name: string; year_group: string | null }
@@ -33,20 +37,58 @@ export function HomeworkForm({
   children: Child[]
 }) {
   const [pending, start] = useTransition()
-  // Reset from a ref, not the submit event: the action prop hands us FormData,
-  // not the form element, so without this the fields — the file input included
-  // — keep the last child's homework after a successful post. Picking the next
-  // child then shows stale text and, worse, re-stages the previous attachment.
+  const [phase, setPhase] = useState<'idle' | 'uploading' | 'posting'>('idle')
   const formRef = useRef<HTMLFormElement>(null)
 
-  return (
-    <form
-      ref={formRef}
-      action={(fd) =>
-        start(async () => handle(await createHomework(fd), formRef.current ?? undefined))
+  /**
+   * Any attachment is uploaded straight to storage from here, and only its key
+   * is sent to the Server Action. Sending the file through the action fails on
+   * anything bigger than the platform's request-body cap (1MB Next default,
+   * 4.5MB on Vercel) — which a real worksheet or photo exceeds — and the
+   * rejected request white-screens in production before our code ever runs.
+   */
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    const formEl = e.currentTarget
+    const fd = new FormData(formEl)
+    const file = fd.get('file')
+    fd.delete('file') // the raw bytes must never travel with the action
+
+    start(async () => {
+      try {
+        if (file instanceof File && file.size > 0) {
+          if (file.size > MAX_ATTACHMENT) {
+            toast.error('That file is over 50MB — please compress it.')
+            return
+          }
+          setPhase('uploading')
+          const prep = await createHomeworkUploadUrl(file.name)
+          if (!prep.ok || !prep.path || !prep.token) {
+            toast.error(prep.message ?? 'Could not prepare the upload.')
+            return
+          }
+          const supabase = createClient()
+          const { error } = await supabase.storage
+            .from('homework')
+            .uploadToSignedUrl(prep.path, prep.token, file, {
+              contentType: file.type || 'application/octet-stream',
+            })
+          if (error) {
+            toast.error('The attachment could not be uploaded. Please try again.')
+            return
+          }
+          fd.set('filePath', prep.path)
+        }
+        setPhase('posting')
+        handle(await createHomework(fd), formEl)
+      } finally {
+        setPhase('idle')
       }
-      className="space-y-4"
-    >
+    })
+  }
+
+  return (
+    <form ref={formRef} onSubmit={onSubmit} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block text-sm">
           <span className="mb-1.5 block font-semibold text-ink">
@@ -145,7 +187,8 @@ export function HomeworkForm({
       <button type="submit" disabled={pending} className="btn-primary">
         {pending ? (
           <>
-            <Loader2 className="h-4 w-4 animate-spin" /> Posting…
+            <Loader2 className="h-4 w-4 animate-spin" />{' '}
+            {phase === 'uploading' ? 'Uploading attachment…' : 'Posting…'}
           </>
         ) : (
           <>
@@ -154,8 +197,8 @@ export function HomeworkForm({
         )}
       </button>
       <p className="text-xs text-ink-muted">
-        Attachments are stored privately. Parents only ever get a 60-second signed
-        link, and only for their own child.
+        Attachments upload straight to private storage — any size up to 50MB.
+        Parents only ever get a 60-second signed link, and only for their own child.
       </p>
     </form>
   )

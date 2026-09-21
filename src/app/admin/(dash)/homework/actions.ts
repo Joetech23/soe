@@ -69,6 +69,38 @@ async function requireAdmin() {
 
 export type ActionResult = { ok: boolean; message: string }
 
+/** A homework attachment key: "<uuid>-<safe filename>", no slashes. */
+const ATTACHMENT_KEY = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-[A-Za-z0-9._-]{1,120}$/
+
+/**
+ * Hand the browser a one-shot URL to upload a homework attachment straight to
+ * storage, bypassing this Server Action's request body entirely.
+ *
+ * The file used to travel inside the createHomework action, but a Server Action
+ * body is capped — 1MB by Next's default, 4.5MB by Vercel's serverless limit —
+ * and neither can be raised past the platform cap. A real worksheet or a phone
+ * photo sails past it, and the request is rejected before any of our code runs,
+ * which surfaces in production as a bare "client-side exception" white screen.
+ *
+ * A signed upload URL is a direct browser→Supabase PUT, so the file never
+ * passes through the function at all and the 50MB app cap is the only limit.
+ */
+export async function createHomeworkUploadUrl(
+  filename: string
+): Promise<{ ok: boolean; path?: string; token?: string; message?: string }> {
+  try {
+    const db = await requireAdmin()
+    const safe = (filename || 'file').replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 120) || 'file'
+    const path = `${crypto.randomUUID()}-${safe}`
+    const { data, error } = await db.storage.from('homework').createSignedUploadUrl(path)
+    if (error || !data) throw error ?? new Error('no signed url')
+    return { ok: true, path: data.path, token: data.token }
+  } catch (err) {
+    console.error('[admin/createHomeworkUploadUrl]', err)
+    return { ok: false, message: 'Could not prepare the upload. Please try again.' }
+  }
+}
+
 const homeworkSchema = z
   .object({
     title: z.string().trim().min(2, 'Give the homework a title.').max(160),
@@ -99,21 +131,16 @@ export async function createHomework(formData: FormData): Promise<ActionResult> 
     }
     const d = parsed.data
 
-    // Optional attachment
+    // Optional attachment — already uploaded straight to storage by the browser
+    // (see createHomeworkUploadUrl). We only receive its key here, never the
+    // file itself, so nothing large ever passes through this action's body.
     let filePath: string | null = null
-    const file = formData.get('file')
-    if (file instanceof File && file.size > 0) {
-      if (file.size > 50 * 1024 * 1024) {
-        return { ok: false, message: 'That file is over 50MB — please compress it.' }
+    const rawPath = String(formData.get('filePath') ?? '').trim()
+    if (rawPath) {
+      if (!ATTACHMENT_KEY.test(rawPath)) {
+        return { ok: false, message: 'That attachment reference looked wrong — please re-attach and try again.' }
       }
-      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 120)
-      filePath = `${crypto.randomUUID()}-${safe}`
-      const { error: upErr } = await db.storage
-        .from('homework')
-        .upload(filePath, file, {
-          contentType: file.type || 'application/octet-stream',
-        })
-      if (upErr) throw upErr
+      filePath = rawPath
     }
 
     const { error } = await db.from('homework_items').insert({
